@@ -17,6 +17,11 @@ code-switching corpus is published anywhere. Survey:
 - **Corpus:** [`danielrosehill/hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching),
   4,737 sentences, of which 458 are dictated.
 
+An **audio** sibling, word-level English/Hebrew identification in speech, is tracked
+separately in
+[Hebrew-English-Word-LID-Audio](https://github.com/danielrosehill/Hebrew-English-Word-LID-Audio)
+(planning stage).
+
 280 human review tasks from round 2 are still open. Their spans are masked rather than
 labelled; see [Output format](#output-format).
 
