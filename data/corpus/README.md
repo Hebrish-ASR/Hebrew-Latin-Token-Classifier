@@ -13,6 +13,15 @@ tags:
   - named-entity-recognition
 size_categories:
   - 1K<n<10K
+configs:
+  - config_name: default
+    data_files:
+      - split: train
+        path: data/train.jsonl
+      - split: validation
+        path: data/validation.jsonl
+      - split: test
+        path: data/test.jsonl
 ---
 
 # Hebrew-in-Latin code-switching corpus
@@ -20,7 +29,7 @@ size_categories:
 English sentences containing **Hebrew words written in Latin characters**, with
 token-level BIO spans marking them.
 
-*"I'm going to **Bituach Leumi** today"* · *"pick up some **challah** from the
+*"I'm going to **Bituach Leumi** today"* · *"pick up some **bamba** from the
 **makolet**"*
 
 No corpus like this was published when this was built. There is no `heb_Latn` label
@@ -33,7 +42,7 @@ Training a classifier that finds Hebrew words in English text so a text-to-speec
 system can pronounce them as Hebrew. The labelling test is **pronunciation, not
 etymology**: would an English voice mispronounce this word, and would treating it as
 Hebrew fix that? So *kosher*, *Shabbat* and *hummus* are negatives — English says them
-acceptably — while *makolet*, *mashkanta* and *challah* are positives.
+acceptably — while *makolet*, *mashkanta* and *arnona* are positives.
 
 ## Splits are term-disjoint
 
@@ -41,11 +50,11 @@ acceptably — while *makolet*, *mashkanta* and *challah* are positives.
 term would let a model memorise a term in training and be scored on it at test time.
 Evaluate generalisation to unseen terms, which is what this is for.
 
-| Split | Sentences | Terms |
-| --- | --- | --- |
-| `train` | 2189 | 596 |
-| `validation` | 272 | 75 |
-| `test` | 272 | 75 |
+| Split | Sentences | Seed terms | Dictated sentences |
+| --- | --- | --- | --- |
+| `train` | 3802 | 987 | 383 |
+| `validation` | 467 | 124 | 37 |
+| `test` | 468 | 124 | 38 |
 
 ## Format
 
@@ -53,6 +62,7 @@ Evaluate generalisation to unseen terms, which is what this is for.
 {
  "id": "g00000",
  "text": "Are you coming to our barbecue for yom haatzmaut this year?",
+ "source": "generated",
  "spans": [
   {
    "start": 35,
@@ -61,6 +71,7 @@ Evaluate generalisation to unseen terms, which is what this is for.
    "term": "yom haatzmaut"
   }
  ],
+ "masked": [],
  "tokens": [
   [
    "Are",
@@ -105,14 +116,22 @@ Evaluate generalisation to unseen terms, which is what this is for.
 `tokens` is `[token, tag]` pairs, tags in `O` / `B-HE` / `I-HE`. Multi-token terms
 such as *bituach leumi* are `B-HE I-HE`, which is why the scheme is not a binary flag.
 
+`masked` lists character spans that carry **no label**: spans the two annotating
+models disagreed on and no human has ruled on yet, and Israeli person names, on which
+the annotation policy has not ruled. Their tokens are tagged `O` in `tokens` for
+format compatibility, so **ignore tokens inside a `masked` span** when training or
+scoring (label `-100`). Tagging them `O` teaches a model that Hebrew words are English.
+
+`source` is `generated` or `dictated`.
+
 ## How it was built
 
 - **generator**: see repo
 - **annotator**: see repo
-- **sentences**: 2733
-- **model agreement**: 85.3%
-- **human-reviewed tasks**: 525
-- **built**: 2026-09-22
+- **generated sentences**: 4279
+- **model agreement**: 87.7%
+- **human-reviewed tasks**: 757
+- **built**: 2026-10-15
 
 Generation was term-seeded: the model was given one Hebrew term and asked for
 sentences using it, and any generation where the term did not word-boundary match was
@@ -120,7 +139,19 @@ rejected. Annotation was a second, **blind** pass by a different model family th
 not told the seed term. Agreements were auto-accepted, disagreements were reviewed by
 a human, and a random 10% sample of the agreements was also human-audited.
 
-**This corpus is largely synthetic.** Sentences were model-generated and
+### Dictated slice
+
+458 sentences come from
+[`danielrosehill/English-Hebrew-Codeswitching-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Codeswitching-Sentences):
+sentences the author read aloud on his phone for a speech-recognition fine-tune, so a
+human chose to say every one of them. Only the text is used here. Labels are
+recomputed by word-boundary match against the term inventory (exclusions applied),
+not copied from the recording metadata. A sentence with no Hebrew span and no
+known-English target term is dropped, since that is a lexicon gap rather than a
+negative. Each sentence goes into the split that already holds its terms, so the
+splits stay term-disjoint.
+
+**The rest of this corpus is synthetic.** Sentences were model-generated and
 model-annotated, with human review concentrated on disagreements and a random audit
 rather than spread over every row. Treat the audit result as the quality estimate.
 

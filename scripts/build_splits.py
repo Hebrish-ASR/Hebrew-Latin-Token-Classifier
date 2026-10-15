@@ -13,6 +13,15 @@ an incomplete review under-labels rather than mislabels.
 
     python3 scripts/build_splits.py
 
+Spans nobody has ruled on are not silently tagged O any more: they are listed in the
+row's `masked` field, and the trainer gives those tokens no label and no loss. An O on
+an unreviewed Hebrew word teaches the model that it is English.
+
+The dictated slice (data/dictated/sentences.jsonl, from fetch_dictated.py) is folded
+in after the generated split is drawn. Each dictated sentence follows its terms into
+whichever split already holds them; one whose terms are all new keeps the split the
+recording dataset gave it; one whose terms straddle two splits is dropped.
+
 Outputs: data/corpus/{train,validation,test}.jsonl, data/corpus/report.json
 """
 from __future__ import annotations
@@ -42,6 +51,7 @@ def ruled(d: dict | None) -> bool:
     to the same handling as unreviewed, leaving the span untagged."""
     return bool(d) and not d.get("deferred")
 GEN = ROOT / "data" / "generated"
+DICTATED = ROOT / "data" / "dictated" / "sentences.jsonl"
 DECISIONS = ROOT / "review" / "decisions.json"
 OUT = ROOT / "data" / "corpus"
 
@@ -88,7 +98,7 @@ def main() -> None:
     prepared = []
 
     for row in rows:
-        text, spans = row["text"], []
+        text, spans, masked = row["text"], [], []
         for n, span in enumerate(row["spans"]):
             b = boundary_ruling.get(span["term"].lower())
             if b is not None:
@@ -127,8 +137,9 @@ def main() -> None:
                 d = decisions.get(f"{row['id']}:{n}")
                 if not ruled(d):
                     keep = False
-                    stats["deferred_dropped" if d else
-                          "pending_unreviewed_dropped"] += 1
+                    masked.append({k: span[k] for k in ("start", "end", "surface")})
+                    stats["deferred_masked" if d else
+                          "pending_unreviewed_masked"] += 1
                 else:
                     keep = decided(d)
                     stats["human_accepted" if keep else "human_rejected"] += 1
@@ -150,7 +161,10 @@ def main() -> None:
         spans.sort(key=lambda s: s["start"])
         prepared.append({
             "id": row["id"], "text": text, "seed_term": row["seed_term"],
-            "category": row["seed_category"], "spans": spans,
+            "category": row["seed_category"], "source": "generated", "spans": spans,
+            "masked": [m for m in masked
+                       if not any(m["start"] < x["end"] and m["end"] > x["start"]
+                                  for x in spans)],
             "tokens": corpus.bio_tags(text, spans),
         })
 
@@ -188,21 +202,53 @@ def main() -> None:
         by_split["validation"] += items[n_t:n_t + n_v]
         by_split["train"] += items[n_t + n_v:]
 
+    # --- dictated slice: follow the terms, never break disjointness ---
+    term_split = {}
+    for split, items in by_split.items():
+        for r in items:
+            if r["seed_term"]:
+                term_split[r["seed_term"].lower()] = split
+    for r in corpus.read_jsonl(DICTATED):
+        homes = {term_split[s["term"].lower()] for s in r["spans"]
+                 if s["term"].lower() in term_split}
+        if len(homes) > 1:
+            stats["dictated_dropped_straddles_splits"] += 1
+            continue
+        split = homes.pop() if homes else r["source_split"]
+        stats[f"dictated_{split}"] += 1
+        # Its new terms now live in that split too, so a later dictated sentence
+        # cannot carry them anywhere else.
+        for s in r["spans"]:
+            term_split.setdefault(s["term"].lower(), split)
+        by_split[split].append({
+            "id": r["id"], "text": r["text"], "seed_term": None, "category": "dictated",
+            "source": "dictated", "spans": r["spans"], "masked": r["masked"],
+            "tokens": corpus.bio_tags(r["text"], r["spans"]),
+        })
+
     for split, items in by_split.items():
         corpus.write_jsonl(OUT / f"{split}.jsonl", items)
+
+    def split_terms(items):
+        return ({r["seed_term"].lower() for r in items if r["seed_term"]} |
+                {s["term"].lower() for r in items if r["source"] == "dictated"
+                 for s in r["spans"]})
 
     leaked = {}
     for a in by_split:
         for b in by_split:
             if a >= b:
                 continue
-            shared = ({r["seed_term"] for r in by_split[a] if r["seed_term"]} &
-                      {r["seed_term"] for r in by_split[b] if r["seed_term"]})
+            shared = split_terms(by_split[a]) & split_terms(by_split[b])
             if shared:
                 leaked[f"{a}|{b}"] = sorted(shared)
 
     report = {
-        "sentences": len(prepared),
+        "sentences": sum(len(v) for v in by_split.values()),
+        "generated_sentences": len(prepared),
+        "dictated_sentences": sum(1 for v in by_split.values() for r in v
+                                  if r["source"] == "dictated"),
+        "masked_spans": sum(len(r["masked"]) for v in by_split.values() for r in v),
         "with_at_least_one_span": sum(1 for r in prepared if r["spans"]),
         "without_spans": sum(1 for r in prepared if not r["spans"]),
         "distinct_terms": len(terms),
@@ -211,7 +257,8 @@ def main() -> None:
         "splits": {k: len(v) for k, v in sorted(by_split.items())},
         "terms_per_split": {k: len({r["seed_term"] for r in v if r["seed_term"]})
                             for k, v in sorted(by_split.items())},
-        "negatives_per_split": {k: sum(1 for r in v if not r["seed_term"])
+        "negatives_per_split": {k: sum(1 for r in v
+                                       if not r["seed_term"] and r["source"] == "generated")
                                 for k, v in sorted(by_split.items())},
         "term_leakage_between_splits": leaked,
         "decisions_applied": len(decisions),

@@ -39,6 +39,15 @@ tags:
   - named-entity-recognition
 size_categories:
   - 1K<n<10K
+configs:
+  - config_name: default
+    data_files:
+      - split: train
+        path: data/train.jsonl
+      - split: validation
+        path: data/validation.jsonl
+      - split: test
+        path: data/test.jsonl
 ---
 
 # Hebrew-in-Latin code-switching corpus
@@ -46,7 +55,7 @@ size_categories:
 English sentences containing **Hebrew words written in Latin characters**, with
 token-level BIO spans marking them.
 
-*"I'm going to **Bituach Leumi** today"* · *"pick up some **challah** from the
+*"I'm going to **Bituach Leumi** today"* · *"pick up some **bamba** from the
 **makolet**"*
 
 No corpus like this was published when this was built. There is no `heb_Latn` label
@@ -59,7 +68,7 @@ Training a classifier that finds Hebrew words in English text so a text-to-speec
 system can pronounce them as Hebrew. The labelling test is **pronunciation, not
 etymology**: would an English voice mispronounce this word, and would treating it as
 Hebrew fix that? So *kosher*, *Shabbat* and *hummus* are negatives — English says them
-acceptably — while *makolet*, *mashkanta* and *challah* are positives.
+acceptably — while *makolet*, *mashkanta* and *arnona* are positives.
 
 ## Splits are term-disjoint
 
@@ -67,8 +76,8 @@ acceptably — while *makolet*, *mashkanta* and *challah* are positives.
 term would let a model memorise a term in training and be scored on it at test time.
 Evaluate generalisation to unseen terms, which is what this is for.
 
-| Split | Sentences | Terms |
-| --- | --- | --- |
+| Split | Sentences | Seed terms | Dictated sentences |
+| --- | --- | --- | --- |
 {split_table}
 
 ## Format
@@ -80,6 +89,14 @@ Evaluate generalisation to unseen terms, which is what this is for.
 `tokens` is `[token, tag]` pairs, tags in `O` / `B-HE` / `I-HE`. Multi-token terms
 such as *bituach leumi* are `B-HE I-HE`, which is why the scheme is not a binary flag.
 
+`masked` lists character spans that carry **no label**: spans the two annotating
+models disagreed on and no human has ruled on yet, and Israeli person names, on which
+the annotation policy has not ruled. Their tokens are tagged `O` in `tokens` for
+format compatibility, so **ignore tokens inside a `masked` span** when training or
+scoring (label `-100`). Tagging them `O` teaches a model that Hebrew words are English.
+
+`source` is `generated` or `dictated`.
+
 ## How it was built
 
 {provenance}
@@ -90,7 +107,19 @@ rejected. Annotation was a second, **blind** pass by a different model family th
 not told the seed term. Agreements were auto-accepted, disagreements were reviewed by
 a human, and a random {audit_pct}% sample of the agreements was also human-audited.
 
-**This corpus is largely synthetic.** Sentences were model-generated and
+### Dictated slice
+
+{dictated} sentences come from
+[`danielrosehill/English-Hebrew-Codeswitching-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Codeswitching-Sentences):
+sentences the author read aloud on his phone for a speech-recognition fine-tune, so a
+human chose to say every one of them. Only the text is used here. Labels are
+recomputed by word-boundary match against the term inventory (exclusions applied),
+not copied from the recording metadata. A sentence with no Hebrew span and no
+known-English target term is dropped, since that is a lexicon gap rather than a
+negative. Each sentence goes into the split that already holds its terms, so the
+splits stay term-disjoint.
+
+**The rest of this corpus is synthetic.** Sentences were model-generated and
 model-annotated, with human review concentrated on disagreements and a random audit
 rather than spread over every row. Treat the audit result as the quality estimate.
 
@@ -113,22 +142,27 @@ def build_card(agreement: dict) -> str:
         if not path.exists():
             continue
         items = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
-        rows.append(f"| `{split}` | {len(items)} | {len({i['seed_term'] for i in items})} |")
+        rows.append(f"| `{split}` | {len(items)} | "
+                    f"{len({i['seed_term'] for i in items if i['seed_term']})} | "
+                    f"{sum(1 for i in items if i.get('source') == 'dictated')} |")
         if not example and items:
-            example = {k: items[0][k] for k in ("id", "text", "spans", "tokens")}
+            first = next((i for i in items if i["spans"]), items[0])
+            example = {k: first[k] for k in ("id", "text", "source", "spans", "masked", "tokens")}
             example["tokens"] = example["tokens"][:8] + [["...", "..."]]
 
     provenance = "\n".join(
         f"- **{k}**: {v}" for k, v in {
             "generator": agreement.get("generator", "see repo"),
             "annotator": agreement.get("annotator", "see repo"),
-            "sentences": agreement.get("sentences", "—"),
+            "generated sentences": agreement.get("sentences", "—"),
             "model agreement": f"{100 * (1 - agreement.get('disagreement_rate', 0)):.1f}%",
             "human-reviewed tasks": agreement.get("review_tasks", "—"),
             "built": datetime.date.today().isoformat(),
         }.items())
 
+    report = json.loads((CORPUS / "report.json").read_text())
     return CARD.format(
+        dictated=report.get("dictated_sentences", 0),
         split_table="\n".join(rows) or "| — | — | — |",
         example=json.dumps(example, ensure_ascii=False, indent=1),
         provenance=provenance,
@@ -178,7 +212,7 @@ def main() -> None:
     for f in files:
         api.upload_file(
             path_or_fileobj=str(f),
-            path_in_repo="README.md" if f.name == "README.md" else f"data/{f.name}",
+            path_in_repo=f"data/{f.name}" if f.suffix == ".jsonl" else f.name,
             repo_id=args.repo,
             repo_type="dataset",
         )

@@ -2,17 +2,23 @@
 
 A token classifier that identifies **Hebrew words written in Latin characters**
 inside English text — *"I'm going to **Bituach Leumi** today"*, *"pick up some
-**challah** from the **makolet**"*.
+**bamba** from the **makolet**"*.
 
 Nothing like it exists. There is no `heb_Latn` label in GlotLID v3, `lid.176` or
 `lid218e`; no token-level code-switching model covers Hebrew; and no Hebrew-English
 code-switching corpus is published anywhere. Survey:
 [Hebrew-Small-Models-Planning/docs/prior-art.md](https://github.com/danielrosehill/Hebrew-Small-Models-Planning/blob/main/docs/prior-art.md).
 
-**Status 2026-09-22: corpus generation. No model has been trained.** The immediate
-deliverable is a reviewed, span-annotated corpus published on Hugging Face; the model
-follows it. The full pipeline runs end to end — a 6-term pilot is committed as
-evidence — but the corpus has not been generated at scale yet.
+**Status 2026-10-15: released.** Both are public on Hugging Face:
+
+- **Model:** [`danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier).
+  Span F1 is **0.941** on the term-disjoint test set (P 0.928 / R 0.953), with 0 false
+  positives on the 58 hard-negative sentences.
+- **Corpus:** [`danielrosehill/hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching),
+  4,737 sentences, of which 458 are dictated.
+
+280 human review tasks from round 2 are still open. Their spans are masked rather than
+labelled; see [Output format](#output-format).
 
 Planning, requirements and the downstream use case live in the sibling repo
 [**Hebrew-Small-Models-Planning**](https://github.com/danielrosehill/Hebrew-Small-Models-Planning).
@@ -114,8 +120,10 @@ contested. The plan, target sizes and category balance are in
 [2] auto_annotate.py      blind, different model  ->  data/generated/annotations.jsonl
 [3] adjudicate.py         agree / disagree        ->  review/queue.json + agreement.json
 [4] review UI             human, contested only   ->  review/decisions.json
+[5a] fetch_dictated.py    read-aloud sentences    ->  data/dictated/sentences.jsonl
 [5] build_splits.py       term-disjoint BIO       ->  data/corpus/{train,validation,test}.jsonl
 [6] publish_dataset.py    Hugging Face dataset    ->  danielrosehill/hebrew-latin-code-switching
+[7] training/train.py     HF Jobs, A10G           ->  danielrosehill/hebrew-latin-token-classifier
 [6b] publish_space.py     Hugging Face Space      ->  danielrosehill/hebrew-latin-span-review
 ```
 
@@ -211,8 +219,13 @@ python scripts/generate_negatives.py --per-kind 125 --concurrency 16
 python scripts/auto_annotate.py      --model qwen/qwen3.8-flash
 python scripts/adjudicate.py
 python scripts/serve_review.py                # http://127.0.0.1:8765
+python scripts/fetch_dictated.py              # dictated slice from the phone recordings
 python scripts/build_splits.py
 python scripts/publish_dataset.py             # dry run; add --push to upload
+
+# train on Hugging Face Jobs (needs a Pro account); pushes the model PRIVATE
+HF_TOKEN=$HUGGINGFACE_TOKEN hf jobs uv run --flavor a10g-small --secrets HF_TOKEN \
+    training/train.py --push danielrosehill/hebrew-latin-token-classifier
 ```
 
 Stages 1 and 2 are **resumable** — output is appended and completed work is skipped,
@@ -308,7 +321,71 @@ explicit negatives for comparable human effort. The repair path still works —
 Two labels plus `O`, CoNLL-style BIO. Multi-token terms are `B-HE I-HE`, which is why
 the tag scheme is not a plain binary flag — 51 of 139 terms are multi-token.
 
-## Planned model
+Rows also carry `source` (`generated` / `dictated`) and `masked`: character spans with
+**no label**. Two things go there. One is spans the models disagreed on that no human
+has ruled on; until 2026-10-15 these were silently tagged `O`. The other is Israeli
+person names in dictated sentences, on which the taxonomy has not ruled. `tokens`
+still shows them as `O` for format compatibility. `training/train.py` gives them label
+`-100`, so they carry no loss and are not scored.
+
+### The dictated slice
+
+`scripts/fetch_dictated.py` pulls the text of
+[`English-Hebrew-Codeswitching-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Codeswitching-Sentences).
+Those are the sentences Daniel reads aloud for the Parakeet fine-tune
+(`~/repos/github/audio-dictation/Parakeet-V2-Personal-Finetune`). Their `target_terms`
+mix Hebrew vocabulary with people, places and tech terms, so labels are **recomputed**
+rather than copied:
+
+- A span is a word-boundary match of an active term in `terms.csv`, of an active term
+  in `lexicon.csv`, or of a spelling variant of either, with exclusions applied.
+- An `ambiguous` term is a span only if the sentence was written for it.
+- Places and tech terms are `O`. The name and tech lists are read from the Parakeet
+  repo's `data/israeli-names.json` and `data/tech-terms.json`.
+- A sentence with no span and no known-negative target is **dropped**: every one of
+  these sentences was written as code-switching, so an empty one is a lexicon gap
+  (*JPost*, *haztarat hon* before `lexicon.csv` was added), not a negative.
+
+`build_splits.py` then puts each dictated sentence in whichever split already holds
+its terms, and drops a sentence whose terms sit in two different splits. On
+2026-10-15, 458 sentences went in and 27 were dropped for that reason.
+
+`lexicon.csv` had to be added to the matching because the generation inventory never
+re-seeded some of the older terms it holds (*chufshat leida*, *pensia*, *Ynet*,
+*Janglo*). That gap in `terms.csv` is real and also affects generation.
+
+## Model
+
+**Trained 2026-10-15.** `training/train.py` runs on Hugging Face Jobs (`a10g-small`):
+8 epochs, lr 3e-5, batch 32, best checkpoint chosen on validation span-F1. It takes
+about 3 minutes of training and costs a few cents. The model is pushed **private**,
+then made public by hand after the numbers have been read.
+
+| Test slice (term-disjoint) | Sentences | P | R | F1 |
+| --- | --- | --- | --- | --- |
+| All | 468 | 0.928 | 0.953 | 0.941 |
+| Dictated | 38 | 0.929 | 1.000 | 0.963 |
+
+Read the errors (`test_errors.jsonl` in the model repo) before trusting the precision
+figure. No designed hard negative was flagged. The false positives are policy-excluded
+place names (*Dizengoff*, *Ramat Gan*) and seeded sentences whose gold label is empty
+because the annotator refused a real Hebrew word (*msabbaha*, *lechem*, *sakin*,
+*od paam*). That second group is a **labelling gap, not a model error**, and the next
+review pass should pick it up.
+
+Inference traps, both verified 2026-10-15:
+
+- Use `training/predict.py`, or `pipeline(..., aggregation_strategy="first")`. Only
+  the first sub-token of each word is trained, so `"simple"` returns `mako` for
+  *makolet*. The pipeline also splits on whitespace, so punctuation attaches to spans.
+  `predict.py` pre-splits with `corpus.TOKEN_RE` and avoids both.
+- `training/train.py` pins `transformers<5`. Version 5 removed
+  `TrainingArguments.warmup_ratio`, and the first job died on it.
+
+The model card source is `training/model-card/README.md`. Upload it to the model repo
+by hand after retraining; `train.py` does not write it.
+
+### Original plan
 
 `xlm-roberta-base` fine-tuned for token classification, following the **EnTaCs**
 English-Tamil code-switching recipe (arXiv 2603.26587) — the closest published
@@ -331,6 +408,10 @@ English word be read in Hebrew.
 | `data/terms.csv` | The term inventory that seeds generation |
 | `data/generated/` | Sentences, blind annotations, adjudication, agreement stats |
 | `data/corpus/` | Term-disjoint BIO splits — the deliverable |
+| `data/dictated/` | Labelled text of the read-aloud sentences (`fetch_dictated.py`) |
+| `training/train.py` | Fine-tune + evaluate + push; a self-contained uv script for HF Jobs |
+| `training/predict.py` | Inference helper, also published in the model repo |
+| `training/model-card/` | Model card source |
 | `data/source/` | Vendored predecessor dataset — do not edit |
 | `data/lexicon.csv` | Terms recovered from it, with quarantine status and reason |
 | `review/` | Single-file review UI and its queue |

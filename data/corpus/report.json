@@ -1,45 +1,52 @@
 {
- "sentences": 2733,
- "with_at_least_one_span": 1915,
- "without_spans": 818,
- "distinct_terms": 743,
- "negatives": 504,
+ "sentences": 4737,
+ "generated_sentences": 4279,
+ "dictated_sentences": 458,
+ "masked_spans": 360,
+ "with_at_least_one_span": 3303,
+ "without_spans": 976,
+ "distinct_terms": 1235,
+ "negatives": 574,
  "negatives_by_kind": {
-  "negative:anglicised": 112,
-  "negative:english_sense": 133,
+  "negative:anglicised": 126,
+  "negative:english_sense": 189,
   "negative:lookalike": 126,
   "negative:substring_trap": 133
  },
  "splits": {
-  "test": 272,
-  "train": 2189,
-  "validation": 272
+  "test": 468,
+  "train": 3802,
+  "validation": 467
  },
  "terms_per_split": {
-  "test": 74,
-  "train": 595,
-  "validation": 74
+  "test": 124,
+  "train": 987,
+  "validation": 124
  },
  "negatives_per_split": {
-  "test": 50,
-  "train": 404,
-  "validation": 50
+  "test": 58,
+  "train": 458,
+  "validation": 58
  },
  "term_leakage_between_splits": {},
  "decisions_applied": 498,
  "term_rulings": 23,
  "boundary_rulings": 113,
  "counts": {
-  "agreed_kept": 1610,
+  "agreed_kept": 2998,
   "audit_overturned": 41,
   "human_rejected": 99,
   "human_accepted": 56,
   "boundary_part_kept": 233,
-  "pending_unreviewed_dropped": 271,
+  "pending_unreviewed_masked": 493,
   "boundary_full": 50,
   "term_ruling_dropped": 25,
   "boundary_none": 64,
-  "human_added": 11
+  "human_added": 11,
+  "dictated_train": 383,
+  "dictated_test": 38,
+  "dictated_validation": 37,
+  "dictated_dropped_straddles_splits": 27
  },
  "unapplied_terms": []
 }
