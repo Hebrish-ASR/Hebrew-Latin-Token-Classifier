@@ -24,17 +24,32 @@ Planning, requirements and the downstream use case live in the sibling repo
 [**Hebrew-Small-Models-Planning**](https://github.com/danielrosehill/Hebrew-Small-Models-Planning).
 This repo is the first of the small models that plan describes.
 
-## Why it exists
+## The use case: text-to-speech that stops botching Hebrew
 
-The immediate consumer is [**My Weird Prompts**](https://myweirdprompts.com), an
-AI-generated podcast produced in Israel and voiced by
-[Chatterbox TTS](https://github.com/resemble-ai/chatterbox). Hebrew words in its scripts get read
-as English grapheme strings — *challah* becomes "chala", the guttural ח collapsing to
-an English "ch". Detecting those spans is the first step to synthesising them with a
-Hebrew voice.
+English text-to-speech reads romanized Hebrew as if it were English. *makolet* comes
+out as "MACK-oh-let" and *mashkanta* gets an English stress pattern. The guttural in
+*chatzer* turns into an English "ch", as in *church*. No voice gets these right,
+because nothing tells it the word is Hebrew.
 
-The classifier is deliberately general-purpose, though. Span detection is useful
-anywhere romanized Hebrew appears in English text.
+The fix this classifier enables:
+
+1. **Find** the Hebrew spans in the script (this model).
+2. **Convert** them to Hebrew script.
+3. **Send** each span to the TTS engine with the **Hebrew language identifier**: a
+   separate `language_id="he"` call for Chatterbox, or `<lang xml:lang="he-IL">` for
+   SSML engines (Azure, Google, Polly).
+
+The rest of the sentence stays English, and the Hebrew word comes out in Hebrew.
+
+**The first consumer is [My Weird Prompts](https://myweirdprompts.com)**, an
+AI-generated podcast produced in Jerusalem and voiced by
+[Chatterbox TTS](https://github.com/resemble-ai/chatterbox). Many of its episodes
+contain Hebrew words, and mispronouncing them has been a long-standing problem.
+Fixing that is why this classifier exists.
+
+It is deliberately general-purpose, though. The same spans are useful wherever
+romanized Hebrew appears in English text: dictation post-processing, search, subtitle
+QA, or any TTS pipeline that serves English speakers in Israel.
 
 This repo is **pass 1 of three**. Pass 2 converts the detected spans to Hebrew script;
 pass 3 normalises them into whatever syntax the target TTS engine wants — which
@@ -396,6 +411,49 @@ roughly that on the romanized class, not 0.9. An imperfect classifier is still
 useful here: it is paired with a lexicon that carries the high-frequency terms, and
 precision is weighted over recall — a miss changes nothing, a false positive makes an
 English word be read in Hebrew.
+
+## Where this fits
+
+Hebrew NLP is well served for **Hebrew-script** text and Hebrew speech. The gap is
+specifically **Hebrew written in Latin letters inside English**, the way English
+speakers in Israel actually write and talk. This project fills that gap and is meant
+to sit beside these, not replace them:
+
+| Organisation / project | What it does | Relation to this |
+| --- | --- | --- |
+| [ivrit.ai](https://huggingface.co/ivrit-ai) | Non-profit for Hebrew speech: ~3,300 h Hebrew speech corpus ([arXiv 2307.08720](https://arxiv.org/abs/2307.08720)), Whisper fine-tunes, a [Hebrew ASR leaderboard](https://ivrit-ai-hebrew-transcription-leaderboard.hf.space/) and a [Hebrew TTS Arena](https://ivrit-ai-tts-arena-hebrew.hf.space/about) | Hebrew-script speech. A detected span could be routed to their models; they do not cover English with embedded Hebrew |
+| [DICTA](https://huggingface.co/dicta-il) | DictaBERT, Nakdan (vocalisation), DictaLM | Hebrew-script text only |
+| [Phonikud](https://github.com/thewh1teagle/phonikud) | Hebrew script to IPA, for Hebrew TTS | A natural pass-2/3 partner: Hebrew span to correct pronunciation |
+| [TaatikNet](https://huggingface.co/malper/taatiknet) | Word-level Hebrew-Latin transliteration, both directions | Fallback for pass 2 (Latin to Hebrew script) |
+| [NNLP-IL/Hebrew-Resources](https://github.com/NNLP-IL/Hebrew-Resources) | The canonical index of Hebrew NLP resources | Where this should be listed |
+| Goldberg & Elhadad, [*Identification of transliterated foreign words in Hebrew script*](https://cris.bgu.ac.il/en/publications/identification-of-transliterated-foreign-words-in-hebrew-script/) (2008) | **The opposite direction**: finding foreign words written in Hebrew letters. Reports about 80/82 precision/recall | The mirror image of this task. A paper, not a released model |
+
+Language-ID systems (GlotLID, fastText `lid.176`, NLLB `lid218e`) have no `heb_Latn`
+label. Token-level code-switching models such as
+[LinCE](https://arxiv.org/abs/2005.04322) cover Spanish, Hindi and Nepali with
+English, but not Hebrew. The full survey, with what was confirmed and what was
+inferred, is in
+[Hebrew-Small-Models-Planning/docs/prior-art.md](https://github.com/danielrosehill/Hebrew-Small-Models-Planning/blob/main/docs/prior-art.md).
+
+### Beyond Hebrew
+
+This is a niche problem, but an important one for **immigrant and heritage-language
+communities**. Wherever a community speaks a majority language and keeps words from
+its own, those words end up romanized in everyday text and mispronounced by every
+voice built for the majority language.
+
+Nothing here is specific to Hebrew except the term list. The recipe carries over to
+any such pair, for example Arabic, Russian or Amharic words inside English or inside
+Hebrew:
+
+- seed generation from a term inventory;
+- blind annotation by a second model family;
+- human review only of disagreements;
+- term-disjoint splits;
+- a small multilingual encoder.
+
+The policy question is the same each time, and so is the answer: label by
+**pronunciation, not etymology**.
 
 ## Layout
 

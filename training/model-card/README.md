@@ -49,6 +49,28 @@ so a text-to-speech system can send these spans to a Hebrew voice instead of rea
 Words English already says acceptably are deliberately **not** flagged: *Shabbat*,
 *hummus*, *challah*, *kosher*, *aliyah*, and city names under the default posture.
 
+## Why: text-to-speech that stops botching Hebrew
+
+English TTS reads romanized Hebrew as English: *makolet* comes out as "MACK-oh-let"
+and *mashkanta* gets English stress. The fix is to find the Hebrew spans, convert them
+to Hebrew script, and send each one to the TTS engine with the **Hebrew language
+identifier**. For Chatterbox that is a separate `language_id="he"` call; for SSML
+engines it is `<lang xml:lang="he-IL">`. The rest of the sentence stays English.
+
+The first user is [**My Weird Prompts**](https://myweirdprompts.com), an AI-generated
+podcast produced in Jerusalem whose episodes often contain Hebrew words that have long
+been mispronounced. The approach carries over to other immigrant and heritage-language
+communities that mix their own words into a majority language; only the term list is
+Hebrew-specific.
+
+**Related work.** Hebrew-script NLP and speech are well covered by
+[ivrit.ai](https://huggingface.co/ivrit-ai), [DICTA](https://huggingface.co/dicta-il),
+[Phonikud](https://github.com/thewh1teagle/phonikud) and
+[TaatikNet](https://huggingface.co/malper/taatiknet). The opposite direction,
+foreign words written in Hebrew script, was studied by Goldberg & Elhadad (2008). No
+language-ID system has a `heb_Latn` label, and before this there was no model for
+Hebrew written in Latin letters inside English.
+
 ## Results
 
 `xlm-roberta-base`, 8 epochs, about 3 minutes on one A10G. Scored on the

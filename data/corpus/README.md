@@ -44,6 +44,28 @@ etymology**: would an English voice mispronounce this word, and would treating i
 Hebrew fix that? So *kosher*, *Shabbat* and *hummus* are negatives — English says them
 acceptably — while *makolet*, *mashkanta* and *arnona* are positives.
 
+## Why: text-to-speech that stops botching Hebrew
+
+English TTS reads romanized Hebrew as English: *makolet* comes out as "MACK-oh-let"
+and *mashkanta* gets English stress. The fix is to find the Hebrew spans, convert them
+to Hebrew script, and send each one to the TTS engine with the **Hebrew language
+identifier**. For Chatterbox that is a separate `language_id="he"` call; for SSML
+engines it is `<lang xml:lang="he-IL">`. The rest of the sentence stays English.
+
+The first user is [**My Weird Prompts**](https://myweirdprompts.com), an AI-generated
+podcast produced in Jerusalem whose episodes often contain Hebrew words that have long
+been mispronounced. The approach carries over to other immigrant and heritage-language
+communities that mix their own words into a majority language; only the term list is
+Hebrew-specific.
+
+**Related work.** Hebrew-script NLP and speech are well covered by
+[ivrit.ai](https://huggingface.co/ivrit-ai), [DICTA](https://huggingface.co/dicta-il),
+[Phonikud](https://github.com/thewh1teagle/phonikud) and
+[TaatikNet](https://huggingface.co/malper/taatiknet). The opposite direction,
+foreign words written in Hebrew script, was studied by Goldberg & Elhadad (2008). No
+language-ID system has a `heb_Latn` label, and before this there was no model for
+Hebrew written in Latin letters inside English.
+
 ## Splits are term-disjoint
 
 **No seed term appears in more than one split.** Splitting by sentence rather than by
@@ -160,6 +182,8 @@ rather than spread over every row. Treat the audit result as the quality estimat
 MIT. Built in
 [danielrosehill/Hebrew-Latin-Token-Classifier](https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier),
 which holds the generation, annotation and review code, and the annotation policy.
+
+Model trained on it: [`danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier).
 
 Related: [`danielrosehill/English-Hebrew-Mixed-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Mixed-Sentences)
 (human-read audio, the predecessor) and
