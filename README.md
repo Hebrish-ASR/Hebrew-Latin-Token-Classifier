@@ -16,6 +16,10 @@ code-switching corpus is published anywhere. Survey:
   positives on the 58 hard-negative sentences.
 - **Corpus:** [`danielrosehill/hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching),
   4,737 sentences, of which 458 are dictated.
+- **Demo:** [Space `danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/spaces/danielrosehill/hebrew-latin-token-classifier).
+  It highlights detected spans and renders them for TTS, as Chatterbox segments and as
+  SSML. It also walks through the use cases. Source is in [`demo/`](demo/); see
+  [The demo Space](#the-demo-space).
 
 An **audio** sibling, word-level English/Hebrew identification in speech, is tracked
 separately in
@@ -145,6 +149,7 @@ contested. The plan, target sizes and category balance are in
 [6] publish_dataset.py    Hugging Face dataset    ->  danielrosehill/hebrew-latin-code-switching
 [7] training/train.py     HF Jobs, A10G           ->  danielrosehill/hebrew-latin-token-classifier
 [6b] publish_space.py     Hugging Face Space      ->  danielrosehill/hebrew-latin-span-review
+[8] demo/                 Hugging Face Space      ->  danielrosehill/hebrew-latin-token-classifier
 ```
 
 Four design rules, each answering a way this normally goes wrong:
@@ -286,6 +291,34 @@ Serving over HTTP is required — browsers block `fetch()` from `file://`, and o
 Expected volume at full scale: ~300-400 disagreements plus a 260-sentence audit, so
 roughly **600 tasks** — one sitting, spent on genuinely ambiguous cases rather than on
 2,600 obvious ones.
+
+### The demo Space
+
+`demo/` is a Gradio Space (`sdk: gradio`, CPU basic), separate from the review Space.
+It runs pass 1 with `demo/predict.py`, a copy of `training/predict.py`. Keep the two
+copies in sync. Pass 2 is an opt-in that uses TaatikNet (`malper/taatiknet`) as a
+stand-in. Pass 3 renders Chatterbox `(text, language_id)` segments and SSML
+`<lang xml:lang="he-IL">`. To publish:
+
+```bash
+hf upload danielrosehill/hebrew-latin-token-classifier demo . --repo-type space --exclude "__pycache__/*"
+```
+
+Three things were verified on 2026-10-15 and are not obvious from the code:
+
+- **The demo pins `transformers>=5`, not `<5`.** Gradio 6.30 requires
+  `huggingface-hub>=1.16`, and every `transformers` 4.x requires `huggingface-hub<1.0`,
+  so the training pin cannot be installed alongside it. The `<5` pin exists only
+  because of `TrainingArguments.warmup_ratio`; inference works on v5.
+- **TaatikNet is word-level.** Given the input `Bituach Leumi`, it returns one fused
+  word. The demo therefore converts each word separately and strips the niqqud.
+- **TaatikNet does not follow spelling conventions.** It returns *makolet* as מקולת
+  rather than מכולת, and *Bituach Leumi* as בתוח לאמי. That is why the planned pass 2
+  is lexicon-first. The Space labels the conversion as experimental.
+
+Two examples were dropped from the Space because the model missed them: lowercase
+*shoko* in "a bottle of shoko", and *tor* (appointment) in "the tor is in March".
+Both are candidates for the next round of terms.
 
 ## The vendored dataset, and why it is no longer primary
 
@@ -475,6 +508,7 @@ The policy question is the same each time, and so is the answer: label by
 | `training/train.py` | Fine-tune + evaluate + push; a self-contained uv script for HF Jobs |
 | `training/predict.py` | Inference helper, also published in the model repo |
 | `training/model-card/` | Model card source |
+| `demo/` | Gradio demo Space: app, inference helper copy, Space card |
 | `data/source/` | Vendored predecessor dataset — do not edit |
 | `data/lexicon.csv` | Terms recovered from it, with quarantine status and reason |
 | `review/` | Single-file review UI and its queue |
