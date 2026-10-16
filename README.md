@@ -309,7 +309,9 @@ roughly **600 tasks** — one sitting, spent on genuinely ambiguous cases rather
 It runs pass 1 with `demo/predict.py`, a copy of `training/predict.py`. Keep the two
 copies in sync. Pass 2 is an opt-in that uses TaatikNet (`malper/taatiknet`) as a
 stand-in. Pass 3 renders Chatterbox `(text, language_id)` segments and SSML
-`<lang xml:lang="he-IL">`. To publish:
+`<lang xml:lang="he-IL">`. It also plays the author's voice note from
+`demo/why-this-model.mp3`, a copy of `docs/voice-note/why-this-model.mp3`; keep the two
+identical. To publish:
 
 ```bash
 hf upload danielrosehill/hebrew-latin-token-classifier demo . --repo-type space --exclude "__pycache__/*"

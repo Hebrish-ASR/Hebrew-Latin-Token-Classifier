@@ -221,6 +221,11 @@ each word is trained.
 
 with gr.Blocks(title="Hebrew-in-Latin token classifier") as demo:
     gr.Markdown(INTRO)
+    with gr.Accordion("Why this model exists, in the author's voice (6½ min)", open=False):
+        gr.Audio("why-this-model.mp3", label="Author's voice note", type="filepath",
+                 interactive=False)
+        gr.Markdown(f"Transcript: [`docs/voice-note/transcript.md`]"
+                    f"({REPO}/blob/main/docs/voice-note/transcript.md)")
     with gr.Row():
         with gr.Column(scale=3):
             inp = gr.Textbox(label="English text", lines=3,
