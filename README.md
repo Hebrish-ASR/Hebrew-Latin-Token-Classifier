@@ -426,12 +426,21 @@ then made public by hand after the numbers have been read.
 | All | 468 | 0.928 | 0.953 | 0.941 |
 | Dictated | 38 | 0.929 | 1.000 | 0.963 |
 
+![Precision, recall and F1 by evaluation slice](docs/figures/results-by-slice.png)
+
 Read the errors (`test_errors.jsonl` in the model repo) before trusting the precision
 figure. No designed hard negative was flagged. The false positives are policy-excluded
 place names (*Dizengoff*, *Ramat Gan*) and seeded sentences whose gold label is empty
 because the annotator refused a real Hebrew word (*msabbaha*, *lechem*, *sakin*,
 *od paam*). That second group is a **labelling gap, not a model error**, and the next
 review pass should pick it up.
+
+![Breakdown of the 41 wrong test sentences by cause](docs/figures/error-breakdown.png)
+
+Both figures are rendered by `scripts/make_figures.py <dir with eval_results.json and
+test_errors.jsonl> docs/figures`. The error categories are assigned per sentence from
+term status in `data/terms.csv` and `data/exclusions.csv`; re-run it after retraining
+and copy the PNGs to the model repo's `figures/`.
 
 Inference traps, both verified 2026-10-15:
 
@@ -520,7 +529,8 @@ The policy question is the same each time, and so is the answer: label by
 | `data/source/` | Vendored predecessor dataset — do not edit |
 | `data/lexicon.csv` | Terms recovered from it, with quarantine status and reason |
 | `review/` | Single-file review UI and its queue |
-| `scripts/` | The seven pipeline stages |
+| `scripts/` | The seven pipeline stages, plus `make_figures.py` for the results charts |
+| `docs/figures/` | Results and error-breakdown charts, also used on the model card |
 | `scripts/lib/` | Shared OpenRouter client and corpus helpers |
 
 ## Licence

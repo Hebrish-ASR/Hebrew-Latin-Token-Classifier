@@ -115,16 +115,24 @@ measures how well the model generalises to words it has never seen.
 | Dictated (human-chosen sentences) | 38 | 0.929 | 1.000 | 0.963 |
 | Validation (model selection) | 467 | 0.950 | 0.948 | 0.949 |
 
+![Precision, recall and F1 by evaluation slice](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier/resolve/main/figures/results-by-slice.png)
+
 **Hard negatives: 0 false positives in 58.** These are sentences built to trap the
 model: substring traps, the English sense of homographs (*dud*, *tor*, *salon*),
 lookalikes, and anglicised loanwords. Of the 41 test sentences it gets wrong, the
 false positives fall into two groups:
 
 - **Real policy misses.** Place names the conservative policy excludes (*Dizengoff*,
-  *Ramat Gan*, *Talpiot*), *mishnah*, *babaganoush*, and once *venv*.
-- **Gold-label gaps.** Hebrew words the blind annotator refused that no human has yet
-  re-reviewed: *msabbaha*, *lechem*, *sakin*, *kapsulot*, *od paam*. Here the model is
-  arguably right.
+  *Ramat Gan*, *Talpiot*), *mishnah*, and once *venv*.
+- **Gold-label gaps.** Hebrew words in the active lexicon that the blind annotator
+  refused and no human has yet re-reviewed: *msabbaha*, *lechem*, *sakin*, *kapsulot*,
+  *od paam*, *mas hachnasa*, *yalla*, *babaganoush*. Here the model is arguably right.
+
+![Breakdown of the 41 wrong test sentences by cause](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier/resolve/main/figures/error-breakdown.png)
+
+Of the 41, **14 are label gaps** (grey) rather than model errors. Resolving them in
+review would raise measured precision without retraining. The 280 open round-2 review
+tasks are the same kind of gap in the training data.
 
 Misses are mostly words that are also common Hebrew loanwords or short (*shakshuka*,
 *sukkot*, *botz*, *chamutz*), and the third word of three-word compounds
