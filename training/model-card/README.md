@@ -51,6 +51,15 @@ so a text-to-speech system can send these spans to a Hebrew voice instead of rea
 Words English already says acceptably are deliberately **not** flagged: *Shabbat*,
 *hummus*, *challah*, *kosher*, *aliyah*, and city names under the default posture.
 
+## The author's note (audio)
+
+Six and a half minutes on why this model exists, recorded the day after release.
+
+<audio controls preload="none" src="https://huggingface.co/danielrosehill/hebrew-latin-token-classifier/resolve/main/voice-note/why-this-model.mp3"></audio>
+
+[Download the mp3](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier/resolve/main/voice-note/why-this-model.mp3)
+· [Transcript](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier/blob/main/voice-note/transcript.md)
+
 ## Why: text-to-speech that stops botching Hebrew
 
 English TTS reads romanized Hebrew as English: *makolet* comes out as "MACK-oh-let"
@@ -61,7 +70,27 @@ engines it is `<lang xml:lang="he-IL">`. The rest of the sentence stays English.
 
 The first user is [**My Weird Prompts**](https://myweirdprompts.com), an AI-generated
 podcast produced in Jerusalem whose episodes often contain Hebrew words that have long
-been mispronounced. The approach carries over to other immigrant and heritage-language
+been mispronounced. Its script-writing agent writes English, and when an episode is
+about life in Israel the Hebrew comes out in Latin letters. Words common enough in
+English (*Shabbat*, *kosher*) come out intelligibly. The long tail does not, and that
+tail is where everyday Israeli life is: *Bituach Leumi*, *Misrad HaKalkala*, *arnona*.
+
+Two obvious fixes don't work:
+
+- **Always translate.** Many of these terms have no good English equivalent, and the
+  translation is not what a listener in Israel would say.
+- **Language ID.** A detector sees Latin script inside an English sentence and calls
+  it English. Nothing expects the script itself to code-switch. That is the gap this
+  model fills: it is pass 1 of a three-pass pipeline (detect → convert to Hebrew
+  script → tag the span for a Hebrew voice), and the other two passes have existing
+  tools.
+
+**Where to draw the line** is a design choice, not a fact. *Shabbat* is Hebrew, but
+flagging it sends it to a Hebrew voice mid-sentence when English already says it
+fine. This release does not flag such words. A possible future version could add a
+third label for "Hebrew that English already says", leaving the choice to the user.
+
+The approach carries over to other immigrant and heritage-language
 communities that mix their own words into a majority language; only the term list is
 Hebrew-specific.
 

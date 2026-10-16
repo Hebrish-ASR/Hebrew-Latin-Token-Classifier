@@ -21,6 +21,13 @@ code-switching corpus is published anywhere. Survey:
   SSML. It also walks through the use cases. Source is in [`demo/`](demo/); see
   [The demo Space](#the-demo-space).
 
+**Why it exists, in the author's voice:** a 6½-minute voice note,
+[`docs/voice-note/why-this-model.mp3`](docs/voice-note/why-this-model.mp3), with a
+[transcript](docs/voice-note/transcript.md). It covers the podcast problem that
+prompted the model, why language ID and translation don't solve it, the three-pass
+pipeline, and the open question of words like *Shabbat*. The same clip is embedded
+on the [model card](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier#the-authors-note-audio).
+
 An **audio** sibling, word-level English/Hebrew identification in speech, is tracked
 separately in
 [Hebrew-English-Word-LID-Audio](https://github.com/danielrosehill/Hebrew-English-Word-LID-Audio)
@@ -500,6 +507,7 @@ The policy question is the same each time, and so is the answer: label by
 | `docs/data-plan.md` | Goal, target sizes, category balance, cost, publication |
 | `docs/taxonomy.md` | **The decision record** — every category, what is excluded and why, and how to reverse it |
 | `docs/annotation-policy.md` | What counts as a positive span, and what is still undecided |
+| `docs/voice-note/` | Author's voice note on why the model exists: mp3, edited transcript, raw ASR |
 | `data/exclusions.csv` | Terms that are never a positive span, by category and disposition |
 | `data/terms.csv` | The term inventory that seeds generation |
 | `data/generated/` | Sentences, blind annotations, adjudication, agreement stats |
