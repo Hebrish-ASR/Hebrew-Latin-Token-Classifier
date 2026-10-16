@@ -43,6 +43,8 @@ I need to go to Bituach Leumi before the makolet closes.
 ```
 
 **Try it:** [demo Space](https://huggingface.co/spaces/danielrosehill/hebrew-latin-token-classifier).
+**API:** [Replicate](https://replicate.com/danielrosehill/hebrew-latin-token-classifier) (CPU;
+inputs `text` and `threshold`, returns the span list shown below).
 
 There was no model for this before. GlotLID, `lid.176` and `lid218e` have no
 `heb_Latn` label, and no token-level code-switching model covers Hebrew. It was built
