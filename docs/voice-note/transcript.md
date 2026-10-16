@@ -96,7 +96,7 @@ publicly at danielrosehill.com.
 | `chatterboxtts` | Chatterbox TTS | Product name |
 | `Shabbat kosher` | *Shabbat* or *kosher* | Two example words, not a phrase |
 | `the Misraad Ta Kalkala` | *Misrad HaKalkala* | Ministry of Economy; ASR split the prefix. Confirmed from context |
-| `the misraad ibrute` | *Misrad HaBriut* | Ministry of Health. **Inferred** from the sound; not confirmed by the author |
+| `the misraad ibrute` | *Misrad HaBriut* | Ministry of Health; ASR split the prefix. Confirmed by the author 2026-10-16 |
 | `Let's take, for argument's sake, and render that` | `let's take [word] for argument's sake, and renders it` | A word is missing from the ASR output; the example word was not recoverable |
 | `the next flag` | the next pass | Context: the three-pass pipeline. The spoken word was "flag" |
 | `danielrosehill. Com` | danielrosehill.com | Domain |
