@@ -20,6 +20,9 @@ code-switching corpus is published anywhere. Survey:
   It highlights detected spans and renders them for TTS, as Chatterbox segments and as
   SSML. It also walks through the use cases. Source is in [`demo/`](demo/); see
   [The demo Space](#the-demo-space).
+- **API:** [Replicate `danielrosehill/hebrew-latin-token-classifier`](https://replicate.com/danielrosehill/hebrew-latin-token-classifier)
+  (CPU). Inputs are `text` and `threshold`; it returns the same span list as
+  `training/predict.py`. Packaging and push steps are in [`replicate/`](replicate/README.md).
 
 **Why it exists, in the author's voice:** a 6½-minute voice note,
 [`docs/voice-note/why-this-model.mp3`](docs/voice-note/why-this-model.mp3), with a
@@ -157,6 +160,7 @@ contested. The plan, target sizes and category balance are in
 [7] training/train.py     HF Jobs, A10G           ->  danielrosehill/hebrew-latin-token-classifier
 [6b] publish_space.py     Hugging Face Space      ->  danielrosehill/hebrew-latin-span-review
 [8] demo/                 Hugging Face Space      ->  danielrosehill/hebrew-latin-token-classifier
+[9] replicate/            Replicate (cog, CPU)    ->  r8.im/danielrosehill/hebrew-latin-token-classifier
 ```
 
 Four design rules, each answering a way this normally goes wrong:

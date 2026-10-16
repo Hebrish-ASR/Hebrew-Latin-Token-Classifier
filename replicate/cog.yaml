@@ -1,0 +1,14 @@
+# Replicate packaging. Weights are baked into the image at build time from a pinned
+# HF revision, so a cold start never hits the Hub. Push: see README.md here.
+build:
+  gpu: false
+  python_version: "3.11"
+  python_requirements: requirements.txt
+  run:
+    - command: >-
+        python -c "from huggingface_hub import snapshot_download;
+        snapshot_download('danielrosehill/hebrew-latin-token-classifier',
+        revision='cb15ef8e30618bc255fd9a1fc35a128bf7741cc5', local_dir='/weights',
+        allow_patterns=['*.json', 'model.safetensors', 'predict.py'])"
+predict: "predict.py:Predictor"
+image: "r8.im/danielrosehill/hebrew-latin-token-classifier"
