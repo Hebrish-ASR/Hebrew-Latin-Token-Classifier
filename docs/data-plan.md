@@ -14,7 +14,7 @@ code-switching corpus is published, token-tagged or otherwise.
 
 ## Why generate rather than repair
 
-The vendored dataset (`danielrosehill/English-Hebrew-Mixed-Sentences`) has 516 records
+The vendored dataset (`Hebrish/English-Hebrew-Mixed-Sentences`) has 516 records
 of which 360 carry a usable label; the other 156 need a human, and its 139-term
 vocabulary is small and partly contaminated. Repairing it is ~242 review tasks and
 yields at most 516 sentences over 139 terms.
@@ -192,7 +192,7 @@ rather than reviewing 600 tasks inconsistently.
 
 ## Publication
 
-Push to Hugging Face as `danielrosehill/hebrew-latin-code-switching` using
+Push to Hugging Face as `Hebrish/hebrew-latin-code-switching` using
 `HUGGINGFACE_TOKEN` from the environment (verified 2026-09-22: `write` role,
 account `danielrosehill`).
 

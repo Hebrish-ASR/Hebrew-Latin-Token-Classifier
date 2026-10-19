@@ -148,12 +148,12 @@ rather than spread over every row. Treat the audit result as the quality estimat
 ## Provenance and licence
 
 MIT. Built in
-[danielrosehill/Hebrew-Latin-Token-Classifier](https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier),
+[Hebrish-ASR/Hebrew-Latin-Token-Classifier](https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier),
 which holds the generation, annotation and review code, and the annotation policy.
 
 Model trained on it: [`danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier).
 
-Related: [`danielrosehill/English-Hebrew-Mixed-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Mixed-Sentences)
+Related: [`Hebrish/English-Hebrew-Mixed-Sentences`](https://huggingface.co/datasets/Hebrish/English-Hebrew-Mixed-Sentences)
 (human-read audio, the predecessor) and
 [`danielrosehill/Whisper-Hebrish`](https://huggingface.co/danielrosehill/Whisper-Hebrish).
 """
@@ -197,7 +197,7 @@ def build_card(agreement: dict) -> str:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--repo", default="danielrosehill/hebrew-latin-code-switching")
+    p.add_argument("--repo", default="Hebrish/hebrew-latin-code-switching")
     p.add_argument("--private", action="store_true")
     p.add_argument("--push", action="store_true", help="actually upload")
     args = p.parse_args()

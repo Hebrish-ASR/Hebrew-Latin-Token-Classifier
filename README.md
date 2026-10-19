@@ -14,7 +14,7 @@ code-switching corpus is published anywhere. Survey:
 - **Model:** [`danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/danielrosehill/hebrew-latin-token-classifier).
   Span F1 is **0.941** on the term-disjoint test set (P 0.928 / R 0.953), with 0 false
   positives on the 58 hard-negative sentences.
-- **Corpus:** [`danielrosehill/hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching),
+- **Corpus:** [`Hebrish/hebrew-latin-code-switching`](https://huggingface.co/datasets/Hebrish/hebrew-latin-code-switching),
   4,737 sentences, of which 458 are dictated.
 - **Demo:** [Space `danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/spaces/danielrosehill/hebrew-latin-token-classifier).
   It highlights detected spans and renders them for TTS, as Chatterbox segments and as
@@ -33,7 +33,7 @@ on the [model card](https://huggingface.co/danielrosehill/hebrew-latin-token-cla
 
 An **audio** sibling, word-level English/Hebrew identification in speech, is tracked
 separately in
-[Hebrew-English-Word-LID-Audio](https://github.com/danielrosehill/Hebrew-English-Word-LID-Audio)
+[Hebrew-English-Word-LID-Audio](https://github.com/Hebrish-ASR/Hebrew-English-Word-LID-Audio)
 (planning stage).
 
 280 human review tasks from round 2 are still open. Their spans are masked rather than
@@ -156,9 +156,9 @@ contested. The plan, target sizes and category balance are in
 [4] review UI             human, contested only   ->  review/decisions.json
 [5a] fetch_dictated.py    read-aloud sentences    ->  data/dictated/sentences.jsonl
 [5] build_splits.py       term-disjoint BIO       ->  data/corpus/{train,validation,test}.jsonl
-[6] publish_dataset.py    Hugging Face dataset    ->  danielrosehill/hebrew-latin-code-switching
+[6] publish_dataset.py    Hugging Face dataset    ->  Hebrish/hebrew-latin-code-switching
 [7] training/train.py     HF Jobs, A10G           ->  danielrosehill/hebrew-latin-token-classifier
-[6b] publish_space.py     Hugging Face Space      ->  danielrosehill/hebrew-latin-span-review
+[6b] publish_space.py     Hugging Face Space      ->  Hebrish/hebrew-latin-span-review
 [8] demo/                 Hugging Face Space      ->  danielrosehill/hebrew-latin-token-classifier
 [9] replicate/            Replicate (cog, CPU)    ->  r8.im/danielrosehill/hebrew-latin-token-classifier
 ```
@@ -284,7 +284,7 @@ One HTML file, no dependencies, no build step. It runs locally, or as a
 ```bash
 python scripts/adjudicate.py                  # refresh the queue
 python scripts/publish_space.py               # dry run
-python scripts/publish_space.py --push        # -> huggingface.co/spaces/danielrosehill/hebrew-latin-span-review
+python scripts/publish_space.py --push        # -> huggingface.co/spaces/Hebrish/hebrew-latin-span-review
 ```
 
 The Space is `sdk: static` — no server, no build. The queue ships as a plain file
@@ -335,7 +335,7 @@ Both are candidates for the next round of terms.
 
 ## The vendored dataset, and why it is no longer primary
 
-[`danielrosehill/English-Hebrew-Mixed-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Mixed-Sentences)
+[`Hebrish/English-Hebrew-Mixed-Sentences`](https://huggingface.co/datasets/Hebrish/English-Hebrew-Mixed-Sentences)
 — 516 LLM-generated, human-read sentences, MIT, built for the
 [`Whisper-Hebrish`](https://huggingface.co/danielrosehill/Whisper-Hebrish) ASR
 fine-tune. The three JSONL splits are vendored under `data/source/`. The 516 WAVs are

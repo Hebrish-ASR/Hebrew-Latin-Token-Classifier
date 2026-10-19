@@ -17,7 +17,7 @@ from predict import HebrewSpans
 
 MODEL = "danielrosehill/hebrew-latin-token-classifier"
 TRANSLIT = "malper/taatiknet"
-REPO = "https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier"
+REPO = "https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier"
 NIQQUD = re.compile(r"[֑-ׇ]")
 
 finder = HebrewSpans(MODEL)
@@ -124,7 +124,7 @@ speakers in Israel write and talk: *"pick up some **bamba** from the **makolet**
 Before this model there was nothing for it. GlotLID, fastText `lid.176` and NLLB
 `lid218e` have no `heb_Latn` label, and no token-level code-switching model covers
 Hebrew. Model: [`{MODEL}`](https://huggingface.co/{MODEL}) ·
-Corpus: [`hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching) ·
+Corpus: [`hebrew-latin-code-switching`](https://huggingface.co/datasets/Hebrish/hebrew-latin-code-switching) ·
 Code: [GitHub]({REPO})
 """
 

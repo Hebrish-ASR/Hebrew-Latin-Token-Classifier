@@ -16,7 +16,7 @@ Runs anywhere; written for Hugging Face Jobs:
     hf jobs uv run --flavor a10g-small --secrets HF_TOKEN training/train.py \\
         --push danielrosehill/hebrew-latin-token-classifier
 
-Data: danielrosehill/hebrew-latin-code-switching (term-disjoint splits). Each row
+Data: Hebrish/hebrew-latin-code-switching (term-disjoint splits). Each row
 carries `tokens` ([word, BIO tag]) and `masked` (character spans with no label:
 unreviewed model disagreements and person names). Words inside a masked span get
 label -100 -- no loss, not scored -- because tagging them O would teach the model
@@ -61,7 +61,7 @@ def word_labels(row: dict) -> tuple[list[str], list[int]]:
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--dataset", default="danielrosehill/hebrew-latin-code-switching")
+    p.add_argument("--dataset", default="Hebrish/hebrew-latin-code-switching")
     p.add_argument("--model", default="FacebookAI/xlm-roberta-base")
     p.add_argument("--epochs", type=float, default=8)
     p.add_argument("--lr", type=float, default=3e-5)

@@ -110,7 +110,7 @@ class Client:
             headers={
                 "Authorization": f"Bearer {api_key(self.provider, key)}",
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier",
+                "HTTP-Referer": "https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier",
                 "X-Title": "Hebrew-Latin-Token-Classifier",
             },
         )

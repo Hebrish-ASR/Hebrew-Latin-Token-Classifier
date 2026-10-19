@@ -30,7 +30,7 @@ QUEUE = ROOT / "review" / "queue.json"
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--repo", default="danielrosehill/hebrew-latin-span-review")
+    p.add_argument("--repo", default="Hebrish/hebrew-latin-span-review")
     p.add_argument("--private", action="store_true")
     p.add_argument("--queue", default=str(QUEUE),
                    help="which queue to bake in (e.g. review/queue-terms.json)")

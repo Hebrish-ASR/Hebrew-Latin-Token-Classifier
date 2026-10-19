@@ -7,7 +7,7 @@ library_name: transformers
 pipeline_tag: token-classification
 base_model: FacebookAI/xlm-roberta-base
 datasets:
-  - danielrosehill/hebrew-latin-code-switching
+  - Hebrish/hebrew-latin-code-switching
 tags:
   - code-switching
   - hebrew
@@ -25,7 +25,7 @@ model-index:
           type: token-classification
         dataset:
           name: hebrew-latin-code-switching (test, term-disjoint)
-          type: danielrosehill/hebrew-latin-code-switching
+          type: Hebrish/hebrew-latin-code-switching
           split: test
         metrics:
           - {type: f1, value: 0.941, name: span F1}
@@ -176,7 +176,7 @@ Labels: `O`, `B-HE`, `I-HE`. Multi-word terms come out as one span (*Bituach Leu
 
 ## Training data
 
-[`danielrosehill/hebrew-latin-code-switching`](https://huggingface.co/datasets/danielrosehill/hebrew-latin-code-switching):
+[`Hebrish/hebrew-latin-code-switching`](https://huggingface.co/datasets/Hebrish/hebrew-latin-code-switching):
 4,737 sentences over 1,235 seed terms.
 
 - **Generated sentences.** Each one was seeded with a term, then annotated blind by a
@@ -205,6 +205,6 @@ input.
 ## Provenance
 
 Code, annotation policy and taxonomy:
-[danielrosehill/Hebrew-Latin-Token-Classifier](https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier).
+[Hebrish-ASR/Hebrew-Latin-Token-Classifier](https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier).
 The training script is `training/train.py`, and `eval_results.json` and
 `test_errors.jsonl` in this repo hold the full test output. Trained 2026-10-15. MIT.

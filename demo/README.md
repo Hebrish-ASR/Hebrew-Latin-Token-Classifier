@@ -13,7 +13,7 @@ models:
   - danielrosehill/hebrew-latin-token-classifier
   - malper/taatiknet
 datasets:
-  - danielrosehill/hebrew-latin-code-switching
+  - Hebrish/hebrew-latin-code-switching
 short_description: Find romanized Hebrew words inside English text
 ---
 
@@ -21,5 +21,5 @@ Demo of [`danielrosehill/hebrew-latin-token-classifier`](https://huggingface.co/
 which finds Hebrew words written in Latin letters inside English text, and of what it
 is for: making text-to-speech pronounce those words as Hebrew.
 
-Source, corpus pipeline and docs: <https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier>.
+Source, corpus pipeline and docs: <https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier>.
 The Space is published from that repo's `demo/` folder.

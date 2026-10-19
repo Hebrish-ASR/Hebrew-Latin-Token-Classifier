@@ -12,7 +12,7 @@ license: mit
 # Hebrew-in-Latin span review
 
 The manual review stage of
-[danielrosehill/Hebrew-Latin-Token-Classifier](https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier).
+[Hebrish-ASR/Hebrew-Latin-Token-Classifier](https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier).
 
 Two models propose spans — a generator that seeds each sentence with a Hebrew term,
 and a blind annotator from a different model family that never sees the seed. Where
@@ -68,4 +68,4 @@ this word, and would treating it as Hebrew fix that?
 - A string that only appears inside a longer English word — **no**. "think" does not
   contain *hi*.
 
-Full policy: [annotation-policy.md](https://github.com/danielrosehill/Hebrew-Latin-Token-Classifier/blob/main/docs/annotation-policy.md)
+Full policy: [annotation-policy.md](https://github.com/Hebrish-ASR/Hebrew-Latin-Token-Classifier/blob/main/docs/annotation-policy.md)
