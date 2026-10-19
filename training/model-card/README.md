@@ -53,6 +53,8 @@ so a text-to-speech system can send these spans to a Hebrew voice instead of rea
 Words English already says acceptably are deliberately **not** flagged: *Shabbat*,
 *hummus*, *challah*, *kosher*, *aliyah*, and city names under the default posture.
 
+**Website: [hebrish.app](https://hebrish.app)**: get the Hebrish keyboard for Android and the desktop apps, see the results, and find every model, dataset and demo in one place. **Android updates through F-Droid:** add the [Hebrish F-Droid repository](https://fdroid.hebrish.app/repo?fingerprint=EF8C2D63D994A10CD489A978585510B47E47452EC09248591CB2C0F39C2BC1FA) (`https://fdroid.hebrish.app/repo`; [steps](https://hebrish.app/download#fdroid)).
+
 ## The author's note (audio)
 
 Six and a half minutes on why this model exists, recorded the day after release.
