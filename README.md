@@ -515,6 +515,8 @@ Hebrew:
 The policy question is the same each time, and so is the answer: label by
 **pronunciation, not etymology**.
 
+**Related: [hebrish.app](https://hebrish.app)**, the website of the English-Hebrew code-switching Parakeet fine-tune whose transcripts use this lexicon's spellings: get the Hebrish keyboard for Android and the desktop apps, see the results, and find every model, dataset and demo in one place.
+
 ## Layout
 
 | Path | Contents |
