@@ -3,7 +3,7 @@
 
 Source: danielrosehill/English-Hebrew-Codeswitching-Sentences, sentences Daniel read
 aloud on his phone for the Parakeet fine-tune
-(~/repos/github/audio-dictation/Parakeet-V2-Personal-Finetune). Only the TEXT is used
+(~/repos/github/audio-dictation/ASR-Training). Only the TEXT is used
 here. These are the only sentences in the corpus a human chose to say, so they double
 as the closest thing to real input this classifier has.
 
@@ -40,7 +40,7 @@ from lib import corpus, orthography  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 REPO = "danielrosehill/English-Hebrew-Codeswitching-Sentences"
-PARAKEET = pathlib.Path.home() / "repos/github/audio-dictation/Parakeet-V2-Personal-Finetune/data"
+PARAKEET = pathlib.Path.home() / "repos/github/audio-dictation/ASR-Training/data"
 OUT = ROOT / "data" / "dictated"
 
 

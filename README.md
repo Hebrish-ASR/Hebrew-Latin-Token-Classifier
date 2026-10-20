@@ -399,7 +399,7 @@ still shows them as `O` for format compatibility. `training/train.py` gives them
 `scripts/fetch_dictated.py` pulls the text of
 [`English-Hebrew-Codeswitching-Sentences`](https://huggingface.co/datasets/danielrosehill/English-Hebrew-Codeswitching-Sentences).
 Those are the sentences Daniel reads aloud for the Parakeet fine-tune
-(`~/repos/github/audio-dictation/Parakeet-V2-Personal-Finetune`). Their `target_terms`
+(`~/repos/github/audio-dictation/ASR-Training`). Their `target_terms`
 mix Hebrew vocabulary with people, places and tech terms, so labels are **recomputed**
 rather than copied:
 
