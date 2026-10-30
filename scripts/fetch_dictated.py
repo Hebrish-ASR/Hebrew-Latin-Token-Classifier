@@ -34,6 +34,7 @@ import pathlib
 import sys
 
 from huggingface_hub import hf_hub_download
+from huggingface_hub.errors import EntryNotFoundError
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib import corpus, orthography  # noqa: E402
@@ -42,6 +43,18 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 REPO = "danielrosehill/English-Hebrew-Codeswitching-Sentences"
 PARAKEET = pathlib.Path.home() / "repos/github/audio-dictation/ASR-Training/data"
 OUT = ROOT / "data" / "dictated"
+
+
+def metadata(split: str, revision: str) -> str:
+    """Local path of a split's metadata rows. The dataset is Parquet since 2026-10-30
+    (Voice-Training-Recorder docs/parquet-layout.md): the index meta/<split>.jsonl has the
+    old metadata.jsonl rows (no file_name; plus shard and the audio's byte range). An older
+    revision is still an audiofolder with data/<split>/metadata.jsonl."""
+    try:
+        return hf_hub_download(REPO, f"meta/{split}.jsonl", repo_type="dataset", revision=revision)
+    except EntryNotFoundError:
+        return hf_hub_download(REPO, f"data/{split}/metadata.jsonl", repo_type="dataset",
+                               revision=revision)
 
 
 def main() -> None:
@@ -77,8 +90,7 @@ def main() -> None:
     rows, stats = [], {"masked_person": 0, "masked_unruled": 0, "o_known": 0,
                        "dropped_unexplained_empty": 0}
     for split in ("train", "test"):
-        path = hf_hub_download(REPO, f"data/{split}/metadata.jsonl", repo_type="dataset",
-                               revision=args.revision)
+        path = metadata(split, args.revision)
         for r in map(json.loads, open(path)):
             text, spans, masked = r["text"], [], []
 
