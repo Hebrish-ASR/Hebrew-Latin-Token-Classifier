@@ -6542,13 +6542,13 @@
   "risk": "seed_only",
   "id": "g01536",
   "split": "generated",
-  "text": "Naxon, that's exactly what I told him, and he still didn't believe me.",
+  "text": "Nachon, that's exactly what I told him, and he still didn't believe me.",
   "start": 0,
   "end": 5,
-  "surface": "Naxon",
-  "term": "naxon",
-  "dataset_label": "naxon",
-  "note": "the generator seeded this term but the annotator did not mark it — is 'Naxon' a Hebrew word written in Latin script?"
+  "surface": "Nachon",
+  "term": "nachon",
+  "dataset_label": "nachon",
+  "note": "the generator seeded this term but the annotator did not mark it — is 'Nachon' a Hebrew word written in Latin script?"
  },
  {
   "key": "g01538:1",
@@ -6556,13 +6556,13 @@
   "risk": "seed_only",
   "id": "g01538",
   "split": "generated",
-  "text": "She kept going naxon, naxon after every single point I made, which got old pretty fast.",
+  "text": "She kept going nachon, nachon after every single point I made, which got old pretty fast.",
   "start": 22,
   "end": 27,
-  "surface": "naxon",
-  "term": "naxon",
-  "dataset_label": "naxon",
-  "note": "the generator seeded this term but the annotator did not mark it — is 'naxon' a Hebrew word written in Latin script?"
+  "surface": "nachon",
+  "term": "nachon",
+  "dataset_label": "nachon",
+  "note": "the generator seeded this term but the annotator did not mark it — is 'nachon' a Hebrew word written in Latin script?"
  },
  {
   "key": "g01561:0",
