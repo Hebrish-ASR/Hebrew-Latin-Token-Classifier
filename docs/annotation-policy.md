@@ -202,6 +202,12 @@ the speaker comes from (*Shabbos* vs *Shabbat*). One use case is matching a text
 right accent, and for that the variant is the signal. A single word is only weak evidence; a downstream
 consumer would combine the variants of all the spans in a text into one estimate for the speaker.
 
+**Why `hebrew_variant` matters (Daniel, 2026-11-15):** small spelling differences (*Shabbos* vs
+*Shabbat*) say a lot about where the speaker comes from. For TTS they decide the target: a voice that
+reads code-switched Hebrew with standard (Israeli) phonetics and one that expects Ashkenazi phonetics are
+**separate training processes**. A corpus without this attribute cannot be split by variant to build
+either one, and cannot route a text to the right voice.
+
 **Model card note (required when anything trained on `lang` is published):** classing Arabic-origin
 Israeli slang as `hebrew` is a simplification for this purpose, not a political or linguistic
 judgement. It records what the speaker is switching into, not where the word came from.
