@@ -13,6 +13,8 @@
     .ccl-variety { border-left-color: #2f9e44; }
     .ccl-flag { border-left-color: #c92a2a; }
     .ccl-box h1, .ccl-box h2, .ccl-box h3, .ccl-box h4, .ccl-box h5, .ccl-box h6 { font-size: 15px !important; margin: 4px 0 2px !important; }
+    .lsf-hint { font-size: 12px !important; font-weight: 700 !important; vertical-align: middle !important; top: 0 !important; margin-left: 5px; padding: 1px 6px; border: 1px solid #868e96; border-bottom-width: 2px; border-radius: 4px; background: #fff3bf; color: #212529 !important; font-family: ui-monospace, monospace; }
+    .lsf-label__hotkey { font-size: 13px !important; font-weight: 700 !important; padding: 0 6px; margin-left: 6px; border: 1px solid rgba(0,0,0,.45); border-bottom-width: 2px; border-radius: 4px; background: #fff3bf; color: #212529 !important; opacity: 1 !important; font-family: ui-monospace, monospace; }
     .ccl-card > h1, .ccl-card > h2, .ccl-card > h3, .ccl-card > h4, .ccl-card > h5, .ccl-card > h6 { font-size: 16px !important; margin: 2px 0 !important; opacity: .8; }
   </Style>
 
