@@ -73,7 +73,7 @@ lang: the language the speaker is switching INTO, not the word's etymology.
 hebrew_variant (when lang is not hebrew, output "standard"; it is ignored): the default is "standard" (modern Israeli). Mark the exception only when the SPELLING itself signals it:
 - "ashkenazic": s/ss for tav (Shabbos, Succos, bris, emes, Shavuos), -os plural endings (seforim is ambiguous; mitzvos is ashkenazic), penultimate-stress spellings like "Yontif", "Toirah". This applies to SHARED words too: "Hanukkah" is standard, "Chanukah"/"Chanukkah" is ashkenazic.
 - "sephardic": a spelling that marks a traditional Sephardi or Mizrahi pronunciation that differs from modern Israeli, e.g. ḥ/ʿ gutturals written distinctly ("Ḥanukka", "'Ivrit" with a marked ayin), "th" for an unpointed tav as in "Shabbath" or "Berith".
-- "yemenite": a spelling that marks Yemenite pronunciation (e.g. "j" for gimel as in "Jimel", distinct waw/vav, "Shabbath").
+- "yemenite": a spelling that marks Yemenite pronunciation (e.g. "j" for gimel, "w" for vav as in "Dawid"). If a spelling fits both sephardic and yemenite, prefer sephardic.
 If unsure, "standard".
 
 Return {{"items": [{{"i": <index>, "spans": [...]}}, ...]}} with one item per input sentence, echoing each index. Empty spans list if none."""
