@@ -346,6 +346,15 @@ the 30 pilot sentences + `ls_build_v2.py --select`: 1,060 that differ from v1, 3
 auto-accepted. Write-back: `with-secrets uv run scripts/ls_export_v2.py [--apply]` -> `data/v2/labels.jsonl`
 (reads project 39 and the Shared-or-plain-English verdicts in project 47).
 
+**Annotating ahead (2026-11-16).** `with-secrets uv run scripts/ls_propagate.py --apply --watch 60` learns Daniel's
+decisions as he labels (term verdict per lemma: Shared / Hebrew / deleted; span redraws such as *tofes 17* -> *tofes*)
+and annotates every open `differs` sentence in project 39, and every open term in 47, that those decisions already
+settle. These annotations are by the bot user `term-verdicts` (LS user id 3), so they leave his queue but stay separate
+from his labels: the export marks them `extrapolated`, and a human annotation always wins. Bot annotations that no
+longer follow (changed verdict, conflict) are withdrawn on the next pass. Test and audit tasks are never annotated
+ahead. First run: 80 verdicts and 2 span rules from 91 annotated sentences annotated 102 sentences + 28 terms.
+API detail: `POST /api/tasks/<id>/annotations/` with an admin token honours `completed_by`, so the bot needs no token.
+
 `ls_export.py` writes the same records the Space's page did (checked 2026-11-15: all 466 current-format
 decisions, 342 span / 113 boundary / 11 record, rebuilt identically, key order included). One addition:
 `corrected_span` on a span decision when the highlight was redrawn (`build_splits.py` ignores it).

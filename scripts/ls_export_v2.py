@@ -2,6 +2,8 @@
 
 For each corpus sentence:
     reviewed       a human annotation exists in project 39 (latest one wins); "can't decide" is kept but flagged
+    extrapolated   only the bot user `term-verdicts` annotated it (scripts/ls_propagate.py: Daniel's term verdicts
+                   and span edits replicated); a human annotation always wins over the bot's
     auto_accepted  no task in the project (not selected by ls_build_v2.py --select): the LLM spans are used as-is
     pending        a task exists but has no annotation yet: LLM spans, flagged pending
 
@@ -67,11 +69,26 @@ def spans_from_result(result: list[dict]) -> tuple[list[dict], bool]:
     return sorted(spans, key=lambda s: s["start"]), cant, variety, text_error
 
 
-def shared_verdicts(pid: int) -> dict[str, str]:
+BOT = "term-verdicts"   # LS user of scripts/ls_propagate.py
+
+
+def bot_id() -> int | None:
+    req = urllib.request.Request(f"{API}/api/users/", headers={"Authorization": f"Token {os.environ['LABEL_STUDIO_ADMIN_TOKEN']}"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return next((u["id"] for u in json.load(r) if u.get("username") == BOT), None)
+
+
+def pick(anns: list[dict], bot: int | None) -> list[dict]:
+    """Human annotations if any, else the bot's."""
+    human = [x for x in anns if x.get("completed_by") != bot]
+    return human or anns
+
+
+def shared_verdicts(pid: int, bot: int | None = None) -> dict[str, str]:
     """Project 47 "Hebrish: Shared or plain English?": term -> Shared | Plain English | Hebrew (latest annotation)."""
     out = {}
     for t in export(pid):
-        anns = [x for x in t.get("annotations", []) if not x.get("was_cancelled")]
+        anns = pick([x for x in t.get("annotations", []) if not x.get("was_cancelled")], bot)
         if not anns:
             continue
         ann = max(anns, key=lambda x: x.get("updated_at") or x.get("created_at") or "")
@@ -90,16 +107,20 @@ def main() -> None:
     a = p.parse_args()
     pre = {r["id"]: r for r in read_jsonl(ROOT / a.pre)}
     tasks = {t["data"]["id"]: t for t in export(a.project)}
-    verdict = shared_verdicts(a.shared_project)
+    bot = bot_id()
+    verdict = shared_verdicts(a.shared_project, bot)
     out, stats = [], collections.Counter()
     for sid, r in pre.items():
         t = tasks.get(sid)
-        anns = [x for x in (t or {}).get("annotations", []) if not x.get("was_cancelled")]
+        anns = pick([x for x in (t or {}).get("annotations", []) if not x.get("was_cancelled")], bot)
         if anns:
             ann = max(anns, key=lambda x: x.get("updated_at") or x.get("created_at") or "")
             spans, cant, variety, text_error = spans_from_result(ann["result"])
-            status = "cant_decide" if cant else "reviewed"
-            source = f"human:project{a.project}"
+            if ann.get("completed_by") == bot:
+                status, source = "extrapolated", f"term-verdicts:project{a.project}"
+            else:
+                status = "cant_decide" if cant else "reviewed"
+                source = f"human:project{a.project}"
         else:
             spans = [{**s, "hebrew_variant": s.get("hebrew_variant") if s["lang"] == "hebrew" else None}
                      for s in r["spans"]]
