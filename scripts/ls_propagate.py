@@ -22,7 +22,12 @@ replaced. ls_export_v2.py writes bot-annotated sentences as status "extrapolated
 
     with-secrets uv run scripts/ls_propagate.py                  # dry run: what it would annotate
     with-secrets uv run scripts/ls_propagate.py --apply
-    with-secrets uv run scripts/ls_propagate.py --apply --watch 60   # repeat every 60 s while labelling
+    with-secrets uv run scripts/ls_propagate.py --apply --watch 60   # poll every 60 s while labelling
+
+--watch polls only the two project records (annotation counts, ~1 KB each) and runs a full pass (two exports, ~2 MB)
+only when a count changed, i.e. Daniel submitted something. It exits on its own after --idle-exit minutes (default
+15) with no new annotation. An edit to an existing annotation does not change a count, so it is picked up by the
+next pass that a new submission triggers.
 
 Needs LABEL_STUDIO_ADMIN_TOKEN; API on the LAN (http://10.0.0.2:8140).
 """
@@ -184,16 +189,26 @@ def main() -> None:
     p.add_argument("--shared-project", type=int, default=47)
     p.add_argument("--pre", default="data/v2/preannotations.google-gemini-3-8-flash.v22.jsonl")
     p.add_argument("--apply", action="store_true")
-    p.add_argument("--watch", type=int, metavar="SECONDS", help="repeat every SECONDS until interrupted")
+    p.add_argument("--watch", type=int, metavar="SECONDS", help="poll every SECONDS; full pass only on new annotations")
+    p.add_argument("--idle-exit", type=float, default=15, metavar="MINUTES",
+                   help="with --watch: exit after MINUTES with no new annotation (default 15)")
     a = p.parse_args()
     pre = {r["id"]: r for r in read_jsonl(ROOT / a.pre)}
     v1 = v1_spans()
     bot = next(u["id"] for u in call("/api/users/") if u.get("username") == BOT)
-    while True:
-        print(json.dumps(run(a, pre, v1, bot)), flush=True)
-        if not a.watch:
-            break
+    def counts():
+        return tuple(call(f"/api/projects/{pid}/")["total_annotations_number"] for pid in (a.project, a.shared_project))
+    print(json.dumps(run(a, pre, v1, bot)), flush=True)
+    if not a.watch:
+        return
+    seen, last_change = counts(), time.time()
+    while time.time() - last_change < a.idle_exit * 60:
         time.sleep(a.watch)
+        now = counts()
+        if now != seen:
+            print(json.dumps(run(a, pre, v1, bot)), flush=True)
+            seen, last_change = counts(), time.time()   # after the pass, so the bot's own writes don't count
+    print(json.dumps({"at": time.strftime("%H:%M:%S"), "exit": f"idle {a.idle_exit:g} min"}), flush=True)
 
 
 if __name__ == "__main__":

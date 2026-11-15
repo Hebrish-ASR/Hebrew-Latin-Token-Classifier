@@ -351,7 +351,7 @@ decisions as he labels (term verdict per lemma: Shared / Hebrew / deleted; span 
 and annotates every open `differs` sentence in project 39, and every open term in 47, that those decisions already
 settle. These annotations are by the bot user `term-verdicts` (LS user id 3), so they leave his queue but stay separate
 from his labels: the export marks them `extrapolated`, and a human annotation always wins. Bot annotations that no
-longer follow (changed verdict, conflict) are withdrawn on the next pass. Test and audit tasks are never annotated
+longer follow (changed verdict, conflict) are withdrawn on the next pass. `--watch` polls only the annotation counts and runs a full pass when they change; it exits after `--idle-exit` minutes (default 15) with no new annotation, so start it with each labelling session. Test and audit tasks are never annotated
 ahead. First run: 80 verdicts and 2 span rules from 91 annotated sentences annotated 102 sentences + 28 terms.
 API detail: `POST /api/tasks/<id>/annotations/` with an admin token honours `completed_by`, so the bot needs no token.
 
