@@ -4,7 +4,8 @@ Scheme (docs/annotation-policy.md, "Label scheme v2", decided 2026-11-15):
     span tag        HEB (romanized Hebrew not established in English) | SHARED (Hebrew/Yiddish also established in English)
     lang            hebrew (default) | yiddish | aramaic | arabic      -- language switched into, not origin
     hebrew_variant  standard (default) | ashkenazic | sephardic | yemenite        -- only when lang = hebrew
-    place names     untagged
+    name_type       none (default) | brand | person | place   -- names are tagged; training decides whether to use them
+    compound        derived: true for a multi-word span (a fixed compound / set phrase)
 
 The LLM runs blind: it does not see the v1 labels. ls_build_v2.py compares the two afterwards, so places where
 they disagree can be reviewed first.
@@ -26,6 +27,7 @@ from lib.corpus import read_jsonl, append_jsonl, word_spans  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "data" / "v2"
 BATCH = 10
+SCHEMA_VERSION = "v2.1"   # 2026-11-15: + name_type, compound; names tagged. v2.0 rows (no suffix in the filename) are stale.
 
 SCHEMA = {
     "type": "object",
@@ -40,8 +42,9 @@ SCHEMA = {
                     "tag": {"type": "string", "enum": ["HEB", "SHARED"]},
                     "lang": {"type": "string", "enum": ["hebrew", "yiddish", "aramaic", "arabic"]},
                     "hebrew_variant": {"type": "string", "enum": ["standard", "ashkenazic", "sephardic", "yemenite"]},
+                    "name_type": {"type": "string", "enum": ["none", "brand", "person", "place"]},
                 },
-                "required": ["surface", "tag", "lang", "hebrew_variant"], "additionalProperties": False}},
+                "required": ["surface", "tag", "lang", "hebrew_variant", "name_type"], "additionalProperties": False}},
         },
         "required": ["i", "spans"], "additionalProperties": False}}},
     "required": ["items"], "additionalProperties": False,
@@ -59,10 +62,12 @@ For each sentence, list every such word or multi-word expression as a span. Copy
 tag:
 - HEB: romanized Hebrew that is NOT established in English. An English reader would not know it and an English TTS voice would mispronounce it. Examples: makolet, mashkanta, misrad hapnim, tofes, mazgan, machsom, ulpan, sababa, yalla, achla.
 - SHARED: a Hebrew or Yiddish word that IS also established in English (in English dictionaries, known to general English readers). The known list includes: {", ".join(shared)}.
-- Do NOT tag place names (cities, neighbourhoods, streets, regions, malls), e.g. {", ".join(places[:20])}. Common nouns that only sound geographic are still tagged (kikar, rehov, tayelet). In "kikar rabin", the whole thing is a place name and is not tagged.
 - Do NOT tag ordinary English words, even if they look like Hebrew (hi, lo, ma, mi, at, ken as English).
-- Brand and company names that are Hebrew words are HEB (e.g. Bituach Leumi, Egged's service names, Tnuva).
-- Span boundaries: a fixed multi-word expression is one span (misrad hapnim, bituach leumi, yom haatzmaut). Don't include English words or punctuation.
+- Names ARE tagged, as HEB or SHARED like any other word, with name_type set (below): brands (Tnuva, Yochananof, Bituach Leumi), personal names (Racheli, Yossi, Moshe), place names (e.g. {", ".join(places[:15])}). A Hebrew name well known in English (Tel Aviv, Jerusalem, Moshe as "Moses" is not the same word) is SHARED; otherwise HEB.
+- Span boundaries: a fixed compound or set phrase is ONE span (cheder madregot, misrad hapnim, kupat cholim, kafe hafuch, yom haatzmaut, kikar rabin). Two Hebrew words that are independent and merely adjacent are separate spans. Don't include English words or punctuation.
+- A Hebrew word carrying an English prefix or suffix is tagged as the WHOLE word (kibbutzniks, davening, makolets). An English possessive "'s" or a separate English article is not included.
+
+name_type: "none" for ordinary vocabulary (the default); "brand" for a company, product, service or institution name; "person" for a personal name; "place" for a toponym (city, neighbourhood, street, region, mall). Common nouns that only sound geographic (kikar, rehov, tayelet) are "none".
 
 lang: the language the speaker is switching INTO, not the word's etymology.
 - "hebrew" (default): anything used as part of Hebrew speech, including Arabic-origin Israeli slang (yalla, sababa, achla, mabsut) and Aramaic-origin words that live in Hebrew (davka, kal vachomer, stam).
@@ -112,12 +117,16 @@ def pilot_sample(rows: list[dict], n: int, seed: int = 7) -> list[dict]:
 
 
 def locate(text: str, span: dict) -> list[dict]:
+    """compound is derived, not asked: under the boundary rule a multi-word span IS a fixed compound/set phrase."""
     hits = word_spans(text, span["surface"])
     out = []
     for s, e in hits:
         lang = span["lang"]
-        out.append({"start": s, "end": e, "surface": text[s:e], "tag": span["tag"], "lang": lang,
-                    "hebrew_variant": span["hebrew_variant"] if lang == "hebrew" else None})
+        surface = text[s:e]
+        out.append({"start": s, "end": e, "surface": surface, "tag": span["tag"], "lang": lang,
+                    "hebrew_variant": span["hebrew_variant"] if lang == "hebrew" else None,
+                    "name_type": None if span.get("name_type", "none") == "none" else span["name_type"],
+                    "compound": bool(re.search(r"\s", surface))})
     return out
 
 
@@ -148,6 +157,7 @@ async def run(rows: list[dict], model: str, out: pathlib.Path, concurrency: int 
                             seen.add((f["start"], f["end"])); spans.append(f)
                 spans.sort(key=lambda s: s["start"])
                 rows_out.append({"id": r["id"], "split": r["split"], "text": r["text"], "model": model, "at": now,
+                                 "schema": SCHEMA_VERSION,
                                  "spans": spans})
             append_jsonl(out, rows_out)
         await asyncio.gather(*(one(todo[k:k + BATCH]) for k in range(0, len(todo), BATCH)))
@@ -165,7 +175,8 @@ def main() -> None:
     rows = load_corpus()
     rows = pilot_sample(rows, a.pilot) if a.pilot else rows
     slug = re.sub(r"[^a-z0-9]+", "-", a.model.lower()).strip("-")
-    out = OUT_DIR / (f"pilot.{slug}.jsonl" if a.pilot else f"preannotations.{slug}.jsonl")
+    sfx = SCHEMA_VERSION.replace(".", "")
+    out = OUT_DIR / (f"pilot.{slug}.{sfx}.jsonl" if a.pilot else f"preannotations.{slug}.{sfx}.jsonl")
     asyncio.run(run(rows, a.model, out, a.concurrency))
 
 

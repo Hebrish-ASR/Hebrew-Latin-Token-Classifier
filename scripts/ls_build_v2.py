@@ -32,7 +32,8 @@ def v1_spans() -> dict[str, list[dict]]:
 
 
 HELP = ("<div style='font-size:.8em;opacity:.65;margin:.3em 0 .6em'><b>HEB</b> romanized Hebrew not known in English "
-        "(makolet) &middot; <b>SHARED</b> also an English word (Shabbat, kosher) &middot; place names: leave untagged. "
+        "(makolet) &middot; <b>SHARED</b> also an English word (Shabbat, kosher). Names are tagged too: click the span, tick Brand / Person / Place. "
+        "Fixed phrases (cheder madregot) are one span, ticked Compound; a Hebrew word with an English ending is tagged whole (kibbutzniks). "
         "Add: press h or s, then select the word. Remove: click the span, Backspace. Click a span to mark an exception "
         "(Yiddish, Ashkenazic ...); blank means Hebrew / Standard.</div>")
 
@@ -54,6 +55,12 @@ def task(row: dict, v1: list[dict]) -> dict:
         if s["lang"] != "hebrew":
             result.append({"id": rid, "from_name": "lang", "to_name": "text", "type": "choices",
                            "value": {**pos, "choices": [s["lang"].capitalize()]}})
+        if s.get("name_type"):
+            result.append({"id": rid, "from_name": "name_type", "to_name": "text", "type": "choices",
+                           "value": {**pos, "choices": [s["name_type"].capitalize()]}})
+        if s.get("compound"):
+            result.append({"id": rid, "from_name": "compound", "to_name": "text", "type": "choices",
+                           "value": {**pos, "choices": ["Compound"]}})
         if s.get("hebrew_variant") not in (None, "standard"):
             result.append({"id": rid, "from_name": "hebrew_variant", "to_name": "text", "type": "choices",
                            "value": {**pos, "choices": [s["hebrew_variant"].capitalize()]}})

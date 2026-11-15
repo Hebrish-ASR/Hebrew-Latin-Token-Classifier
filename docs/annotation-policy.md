@@ -178,12 +178,26 @@ acceptable.
 | --- | --- | --- |
 | `HEB` | Romanized Hebrew that is not established in English. This is v1's `HE` | *makolet*, *mashkanta*, *misrad hapnim* |
 | `SHARED` | A Hebrew (or Yiddish) word also established in English. These were v1's "always negative" `anglicised` class | *Shabbat*, *kosher*, *kibbutz*, *chutzpah*, *schlep* |
-| *(none)* | Everything else, **place names included** | *Tel Aviv*, *Ramat Gan*, *Dizengoff* |
+| *(none)* | Everything else | |
 
-**Place names stay untagged.** Daniel's reasoning: a place-name class drifts away from the classifier's
-purpose. The scope stays narrow: romanized Hebrew, plus the shared/dual class. The other conservative
-exclusions in [`taxonomy.md`](taxonomy.md) (`function_word`, `israel_english`, `asr_handles_it`) are
-unchanged.
+**Names (v2.1, 2026-11-15):** names are tagged in the dataset like any other word (`HEB`, or `SHARED` if
+known in English, e.g. *Tel Aviv*), with a per-span `name_type`: `brand` | `person` | `place`, and null for
+ordinary vocabulary. Daniel annotates them "where I can", so they can be used later. **The classifier's
+scope is unchanged:** person and place names are excluded at training time, as decided earlier on
+2026-11-15 ("keep it narrow"); brands stay positive, as decided 2026-09-22. This supersedes "place names
+stay untagged" *in the dataset only*. The other conservative exclusions in [`taxonomy.md`](taxonomy.md)
+(`function_word`, `israel_english`, `asr_handles_it`) are unchanged.
+
+**Span boundaries (v2.1, 2026-11-15):**
+- A fixed compound or set phrase is **one span**, with per-span `compound` = true (*cheder madregot*,
+  *misrad hapnim*, *kupat cholim*). Two independent Hebrew words that are merely adjacent are two spans. In
+  BIO terms that is `B I` vs `B B`; the `compound` flag lets compounds be pulled out as their own set.
+  Pre-annotation sets `compound` for every multi-word span, and the reviewer unticks it where wrong.
+- A Hebrew word with an English prefix or suffix is tagged as the **whole word** (*kibbutzniks*,
+  *davening*, *makolets*). An English possessive *'s* and a separate English article stay outside.
+
+**Schema versions:** v2.0 (first pre-annotation run, 2026-11-15, 3,650 sentences, stopped) has no
+`name_type` / `compound` and leaves names untagged. It is stale, kept only for comparison. v2.1 is current.
 
 ### Span attributes (per term, in the lexicon; copied onto each corpus span)
 
