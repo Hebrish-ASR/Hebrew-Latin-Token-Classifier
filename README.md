@@ -299,6 +299,29 @@ resumed. **Download decisions.json** into `review/`, then run `build_splits.py`.
 Serving over HTTP is required — browsers block `fetch()` from `file://`, and opening
 `review/index.html` directly shows a message saying so.
 
+### Reviewing in Carrot Cake Lab (since 2026-11-15)
+
+The open round-1 tasks (no entry in `review/decisions.json`) moved to Daniel's self-hosted Label Studio,
+one project per kind. On 2026-11-15: 183 span, 44 boundary, 52 record and 1 term task were open; round 2
+(`review/queue-terms.json`, 614 terms) is fully decided, so no term project was built.
+
+| Kind | Project | Open on 2026-11-15 | Keys |
+|---|---|---|---|
+| span | 35 "Hebrish: span review", https://carrotcakelab.com/projects/35 | 183 (pilot 15 loaded) | y include, n exclude, d can't decide; candidate pre-highlighted, redraw to correct it |
+| boundary | 36 "Hebrish: boundary review", https://carrotcakelab.com/projects/36 | 44 (pilot 15) | y whole, n shorter/parts, x neither, d can't decide |
+| record | 37 "Hebrish: record audit", https://carrotcakelab.com/projects/37 | 52 (pilot 15) | type missed terms comma-separated, 0 none missed, d can't decide |
+
+```bash
+uv run scripts/ls_build_tasks.py --kind span --limit 15 -o /tmp/span.json   # queue order, open tasks only
+with-secrets uv run scripts/ls_export.py --project 35 --project 36 --project 37          # dry run -> /tmp/decisions.ls.json
+with-secrets uv run scripts/ls_export.py --project 35 --project 36 --project 37 --apply  # merge into review/decisions.json
+```
+
+`ls_export.py` writes the same records the Space's page did (checked 2026-11-15: all 466 current-format
+decisions, 342 span / 113 boundary / 11 record, rebuilt identically, key order included). One addition:
+`corrected_span` on a span decision when the highlight was redrawn (`build_splits.py` ignores it).
+The published Space's `queue.json` predates the 2026-11-07 *nachon* respelling; `review/queue.json` is current.
+
 Expected volume at full scale: ~300-400 disagreements plus a 260-sentence audit, so
 roughly **600 tasks** — one sitting, spent on genuinely ambiguous cases rather than on
 2,600 obvious ones.
