@@ -188,14 +188,20 @@ unchanged.
 ### Span attributes (per term, in the lexicon; copied onto each corpus span)
 
 These are properties of the word, not of the sentence. They are therefore set once per term in
-`data/terms.csv`, not tagged in every sentence.
+`data/terms.csv`, not tagged in every sentence. **There are two independent attributes, not one
+combined class** (Daniel, 2026-11-15): the Hebrew variant matters more and must not be bundled with
+language identification.
 
-| Attribute | Values | Notes |
-| --- | --- | --- |
-| `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | The language the speaker is switching into, **not the word's origin**. Proposed: Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew`. Daniel has not confirmed this. |
-| `reading` | `modern`, `ashkenazic`, `sephardic`, `unmarked` | The transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. Most words show no sign, so most are `unmarked`. |
+| Attribute | Values | Default | Notes |
+| --- | --- | --- | --- |
+| `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | `hebrew` | The language the speaker is switching into, **not the word's origin**. Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew` (DECIDED 2026-11-15). |
+| `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. |
 
-**Consequence for spelling variants:** variants that signal a different `reading` (*Shabbos* vs
+**Model card note (required when anything trained on `lang` is published):** classing Arabic-origin
+Israeli slang as `hebrew` is a simplification for this purpose, not a political or linguistic
+judgement. It records what the speaker is switching into, not where the word came from.
+
+**Consequence for spelling variants:** variants that signal a different `hebrew_variant` (*Shabbos* vs
 *Shabbat*) become separate lexicon entries. They are no longer merged under one canonical spelling;
 see *Spelling variation* in [`taxonomy.md`](taxonomy.md). Variants that are only orthographic
 (*chag* / *hag*) stay merged.
@@ -206,7 +212,7 @@ see *Spelling variation* in [`taxonomy.md`](taxonomy.md). Variants that are only
 | --- | --- | --- |
 | v1 (released) | `HE` = `HEB` | Unchanged; `SHARED` maps to O |
 | v2 candidate | `HEB`, `SHARED` as two BIO types | Head grows by about 768 weights per extra label (negligible); the real cost is examples per class |
-| attribute stage | `lang`, `reading` from lexicon lookup; a spelling-cue classifier for unknown terms only if lookup proves insufficient | Not decided |
+| attribute stage | `lang` and `hebrew_variant`, each its own output, from lexicon lookup; a spelling-cue classifier for unknown terms only if lookup proves insufficient | Not decided |
 
 ### Implementation order (tracked in Annotation-Environment `planning/backlog.md`)
 
@@ -215,6 +221,6 @@ see *Spelling variation* in [`taxonomy.md`](taxonomy.md). Variants that are only
 | 1 | Relabel existing anglicised spans as `SHARED`: the 126 `negative:anglicised` sentences plus every occurrence of an `anglicised` term inside other sentences (lexicon lookup), then human check | none |
 | 2 | Run the released model over the whole corpus (4,737 sentences); queue model-vs-label disagreements | cents (Modal / Replicate, not the laptop) |
 | 3 | Rebuild LS project 35 as **one task per sentence**: all current spans pre-drawn, the reviewer adds missing spans and deletes wrong ones, with `HEB` and `SHARED` as labels. Queue: the 183 open span tasks, then step 2's disagreements, then the whole 468-sentence test split (for a trustworthy F1) | none |
-| 4 | LLM-fill `lang` and `reading` for every term (~800 terms); human review of uncertain picks, one decision per term | under $1, estimate first |
+| 4 | LLM-fill `lang` and `hebrew_variant` for every term (~800 terms); human review of uncertain picks, one decision per term | under $1, estimate first |
 | 5 | Generate ~150-200 more `SHARED` terms × 3 sentences (~500-600 sentences); the current 68 terms are too thin | a few dollars; needs Daniel's approval of model and estimate |
 | 6 | Train a v2 candidate on HF Jobs; v1 stays the published default until v2's numbers are read | cents |
