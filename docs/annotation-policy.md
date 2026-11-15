@@ -8,6 +8,10 @@ then record the answer here. Decisions already taken are marked **DECIDED** with
 
 ## The label
 
+> **Dataset label scheme v2: DECIDED 2026-11-15 (Daniel), not yet implemented.** See
+> [Label scheme v2](#label-scheme-v2-decided-2026-11-15) below. The text in this section and in
+> *Anglicised Hebrew* describes v1, which the released model (2026-10-15) was trained on.
+
 One entity type, `HE`: a **Hebrew word rendered in Latin characters**. BIO tagging,
 so a multi-token term is `B-HE I-HE` (51 of 139 known terms are multi-token).
 
@@ -155,3 +159,62 @@ The 360 spans that come from an aligned dataset label are pre-accepted and not
 queued. That is a deliberate trade: it assumes an aligned label is correct, which is
 a weaker assumption than trusting the labels wholesale, but not a free one. If the
 review turns up aligned labels that are also wrong, stop and re-queue them.
+
+## Label scheme v2: DECIDED 2026-11-15
+
+Decided by Daniel on 2026-11-15, in a session about the span-review project in Carrot Cake Lab
+(Label Studio project 35). **Not implemented yet:** the corpus, `adjudicate.py`, `build_splits.py` and
+the released model are all still on v1 (a single tag, `HE`). The work list is in the
+*Implementation order* table below.
+
+**Principle: the dataset is richer than the model.** Every distinction below is annotated in the corpus.
+Which of them a given model learns is decided at training time, so one dataset can serve several
+model variants. This is experimental work, so a first model that is shaky on the new classes is
+acceptable.
+
+### Span tags (per span, in the corpus)
+
+| Tag | Meaning | Examples |
+| --- | --- | --- |
+| `HEB` | Romanized Hebrew that is not established in English. This is v1's `HE` | *makolet*, *mashkanta*, *misrad hapnim* |
+| `SHARED` | A Hebrew (or Yiddish) word also established in English. These were v1's "always negative" `anglicised` class | *Shabbat*, *kosher*, *kibbutz*, *chutzpah*, *schlep* |
+| *(none)* | Everything else, **place names included** | *Tel Aviv*, *Ramat Gan*, *Dizengoff* |
+
+**Place names stay untagged.** Daniel's reasoning: a place-name class drifts away from the classifier's
+purpose. The scope stays narrow: romanized Hebrew, plus the shared/dual class. The other conservative
+exclusions in [`taxonomy.md`](taxonomy.md) (`function_word`, `israel_english`, `asr_handles_it`) are
+unchanged.
+
+### Span attributes (per term, in the lexicon; copied onto each corpus span)
+
+These are properties of the word, not of the sentence. They are therefore set once per term in
+`data/terms.csv`, not tagged in every sentence.
+
+| Attribute | Values | Notes |
+| --- | --- | --- |
+| `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | The language the speaker is switching into, **not the word's origin**. Proposed: Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew`. Daniel has not confirmed this. |
+| `reading` | `modern`, `ashkenazic`, `sephardic`, `unmarked` | The transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. Most words show no sign, so most are `unmarked`. |
+
+**Consequence for spelling variants:** variants that signal a different `reading` (*Shabbos* vs
+*Shabbat*) become separate lexicon entries. They are no longer merged under one canonical spelling;
+see *Spelling variation* in [`taxonomy.md`](taxonomy.md). Variants that are only orthographic
+(*chag* / *hag*) stay merged.
+
+### What a model may use
+
+| Variant | Learns | Notes |
+| --- | --- | --- |
+| v1 (released) | `HE` = `HEB` | Unchanged; `SHARED` maps to O |
+| v2 candidate | `HEB`, `SHARED` as two BIO types | Head grows by about 768 weights per extra label (negligible); the real cost is examples per class |
+| attribute stage | `lang`, `reading` from lexicon lookup; a spelling-cue classifier for unknown terms only if lookup proves insufficient | Not decided |
+
+### Implementation order (tracked in Annotation-Environment `planning/backlog.md`)
+
+| # | Step | Cost |
+| --- | --- | --- |
+| 1 | Relabel existing anglicised spans as `SHARED`: the 126 `negative:anglicised` sentences plus every occurrence of an `anglicised` term inside other sentences (lexicon lookup), then human check | none |
+| 2 | Run the released model over the whole corpus (4,737 sentences); queue model-vs-label disagreements | cents (Modal / Replicate, not the laptop) |
+| 3 | Rebuild LS project 35 as **one task per sentence**: all current spans pre-drawn, the reviewer adds missing spans and deletes wrong ones, with `HEB` and `SHARED` as labels. Queue: the 183 open span tasks, then step 2's disagreements, then the whole 468-sentence test split (for a trustworthy F1) | none |
+| 4 | LLM-fill `lang` and `reading` for every term (~800 terms); human review of uncertain picks, one decision per term | under $1, estimate first |
+| 5 | Generate ~150-200 more `SHARED` terms × 3 sentences (~500-600 sentences); the current 68 terms are too thin | a few dollars; needs Daniel's approval of model and estimate |
+| 6 | Train a v2 candidate on HF Jobs; v1 stays the published default until v2's numbers are read | cents |

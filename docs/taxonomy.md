@@ -66,6 +66,9 @@ Not in `exclusions.csv`. This is everything the file does not name.
 
 ### 2. `anglicised` — **always excluded**
 
+> **2026-11-15:** in label scheme v2 these become the `SHARED` span tag instead of negatives. See
+> [annotation-policy.md](annotation-policy.md#label-scheme-v2-decided-2026-11-15). Not implemented yet.
+
 Hebrew words, modern or ancient, that can be assumed present in an English corpus and
 that current TTS renders acceptably with no Hebrew instruction at all.
 
@@ -91,6 +94,9 @@ or · sa · kan · eifo · le'an · me'ayin*
 untranslated in English speech.
 
 ### 4. `place_name` — excluded, **conservative**
+
+> **2026-11-15:** confirmed for label scheme v2. Place names stay untagged, and there will be no `PLACE` class
+> (Daniel: keep the classifier narrow).
 
 Toponyms: cities, neighbourhoods, streets, squares, regions, named malls.
 
