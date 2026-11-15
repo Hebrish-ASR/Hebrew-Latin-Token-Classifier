@@ -7,19 +7,19 @@
   </Labels>
   <Text name="text" value="$text" granularity="word"/>
   <View visibleWhen="region-selected">
-    <Header value="Selected span: set only if it is an exception (blank = hebrew / standard)" size="6"/>
+    <Header value="Selected span: set only if it is an exception (blank = Hebrew / Standard)" size="6"/>
     <Choices name="lang" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="yiddish"/>
-      <Choice value="aramaic"/>
-      <Choice value="arabic"/>
+      <Choice value="Yiddish"/>
+      <Choice value="Aramaic"/>
+      <Choice value="Arabic"/>
     </Choices>
     <Choices name="hebrew_variant" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="ashkenazic"/>
-      <Choice value="sephardic"/>
-      <Choice value="yemenite"/>
+      <Choice value="Ashkenazic"/>
+      <Choice value="Sephardic"/>
+      <Choice value="Yemenite"/>
     </Choices>
   </View>
   <Choices name="sentence" toName="text" choice="single" showInline="true">
-    <Choice value="can't decide" hotkey="d"/>
+    <Choice value="can't decide" alias="can't decide" html="Can't decide" hotkey="d"/>
   </Choices>
 </View>

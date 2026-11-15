@@ -121,13 +121,13 @@ def locate(text: str, span: dict) -> list[dict]:
     return out
 
 
-async def run(rows: list[dict], model: str, out: pathlib.Path) -> None:
+async def run(rows: list[dict], model: str, out: pathlib.Path, concurrency: int = 8) -> None:
     done = {r["id"] for r in read_jsonl(out)}
     todo = [r for r in rows if r["id"] not in done]
     print(f"{len(rows)} sentences, {len(todo)} to label, model {model} -> {out.relative_to(ROOT)}")
     system = system_prompt()
     unlocated = 0
-    async with llm.Client(model, concurrency=8, stage="v2-preannotate") as client:
+    async with llm.Client(model, concurrency=concurrency, stage="v2-preannotate") as client:
         async def one(batch):
             nonlocal unlocated
             user = "\n".join(f"{i}. {r['text']}" for i, r in enumerate(batch))
@@ -160,12 +160,13 @@ def main() -> None:
     g.add_argument("--pilot", type=int, help="stratified sample of N sentences")
     g.add_argument("--all", action="store_true")
     p.add_argument("--model", required=True)
+    p.add_argument("--concurrency", type=int, default=8)
     a = p.parse_args()
     rows = load_corpus()
     rows = pilot_sample(rows, a.pilot) if a.pilot else rows
     slug = re.sub(r"[^a-z0-9]+", "-", a.model.lower()).strip("-")
     out = OUT_DIR / (f"pilot.{slug}.jsonl" if a.pilot else f"preannotations.{slug}.jsonl")
-    asyncio.run(run(rows, a.model, out))
+    asyncio.run(run(rows, a.model, out, a.concurrency))
 
 
 if __name__ == "__main__":

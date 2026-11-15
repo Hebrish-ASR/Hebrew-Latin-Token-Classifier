@@ -4,15 +4,18 @@ The reviewer adds missing spans, deletes wrong ones, retags HEB <-> SHARED, and 
 span only when it is an exception (default hebrew / standard: an unset choice means the default).
 
     uv run scripts/ls_build_v2.py data/v2/pilot.google-gemini-3-8-flash.jsonl -o /tmp/v2.json
+    uv run scripts/ls_build_v2.py data/v2/preannotations.google-gemini-3-8-flash.jsonl --select --skip ids.txt -o /tmp/v2.json
+        (--select: only what needs a human -- differs from v1, test split, 5% audit; the rest is auto-accepted)
     then: ccl.py create-project scripts/ls_v2_config.xml --title "Hebrish: sentence labels v2" --confirm
           ccl.py import <pid> /tmp/v2.json --confirm          (Carrot-Cake-Lab-Plugin)
 
 Each task's data carries the v1 spans and a `differs` flag (LLM vs v1). Sort or filter on it in the Data Manager
-to review disagreements first. Write-back: scripts/ls_export_v2.py (not written yet).
+to review disagreements first. Choice values are capitalised in Label Studio (Yiddish, Ashkenazic ...);
+the corpus stores them lower-case, so the export lower-cases them. Write-back: scripts/ls_export_v2.py (not written yet).
 """
 from __future__ import annotations
 
-import argparse, html, json, pathlib, sys
+import argparse, html, json, pathlib, random, sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib.corpus import read_jsonl  # noqa: E402
@@ -31,7 +34,7 @@ def v1_spans() -> dict[str, list[dict]]:
 HELP = ("<div style='font-size:.8em;opacity:.65;margin:.3em 0 .6em'><b>HEB</b> romanized Hebrew not known in English "
         "(makolet) &middot; <b>SHARED</b> also an English word (Shabbat, kosher) &middot; place names: leave untagged. "
         "Add: press h or s, then select the word. Remove: click the span, Backspace. Click a span to mark an exception "
-        "(Yiddish, Ashkenazic ...); blank means Hebrew / standard.</div>")
+        "(Yiddish, Ashkenazic ...); blank means Hebrew / Standard.</div>")
 
 
 def task(row: dict, v1: list[dict]) -> dict:
@@ -50,10 +53,10 @@ def task(row: dict, v1: list[dict]) -> dict:
                        "value": {**pos, "labels": [s["tag"]]}})
         if s["lang"] != "hebrew":
             result.append({"id": rid, "from_name": "lang", "to_name": "text", "type": "choices",
-                           "value": {**pos, "choices": [s["lang"]]}})
+                           "value": {**pos, "choices": [s["lang"].capitalize()]}})
         if s.get("hebrew_variant") not in (None, "standard"):
             result.append({"id": rid, "from_name": "hebrew_variant", "to_name": "text", "type": "choices",
-                           "value": {**pos, "choices": [s["hebrew_variant"]]}})
+                           "value": {**pos, "choices": [s["hebrew_variant"].capitalize()]}})
     return {"data": {"id": row["id"], "split": row["split"], "text": row["text"], "note": note,
                      "differs": differs, "v1": v1_txt, "llm_model": row["model"]},
             "predictions": [{"model_version": row["model"], "result": result}]}
@@ -63,13 +66,32 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("preannotations")
     p.add_argument("-o", "--out", required=True)
+    p.add_argument("--select", action="store_true",
+                   help="review queue only: LLM differs from v1, the whole test split, and an audit sample of the rest")
+    p.add_argument("--audit", type=float, default=0.05, help="share of the remaining sentences to audit (default 5%%)")
+    p.add_argument("--skip", help="file of sentence ids already in the project (one per line)")
     a = p.parse_args()
     v1 = v1_spans()
     rows = read_jsonl(pathlib.Path(a.preannotations))
-    tasks = [task(r, v1.get(r["id"], [])) for r in rows]
-    tasks.sort(key=lambda t: not t["data"]["differs"])       # disagreements first in import order
+    skip = set(pathlib.Path(a.skip).read_text().split()) if a.skip else set()
+    tasks = [task(r, v1.get(r["id"], [])) for r in rows if r["id"] not in skip]
+    why = {}
+    if a.select:
+        rng = random.Random(15112026)
+        keep = []
+        for t in tasks:
+            d = t["data"]
+            reason = "differs" if d["differs"] else "test" if d["split"] == "test" else (
+                "audit" if rng.random() < a.audit else None)
+            if reason:
+                d["queue"] = reason; keep.append(t)
+            why[reason or "auto_accepted"] = why.get(reason or "auto_accepted", 0) + 1
+        tasks = keep
+    order = {"differs": 0, "test": 1, "audit": 2}
+    tasks.sort(key=lambda t: (order.get(t["data"].get("queue"), 0 if t["data"]["differs"] else 1)))
     pathlib.Path(a.out).write_text(json.dumps(tasks, ensure_ascii=False, indent=1))
-    print(json.dumps({"tasks": len(tasks), "differs": sum(t["data"]["differs"] for t in tasks), "out": a.out}))
+    print(json.dumps({"tasks": len(tasks), "differs": sum(t["data"]["differs"] for t in tasks), "skipped": len(skip),
+                      "by_queue": why, "out": a.out}))
 
 
 if __name__ == "__main__":
