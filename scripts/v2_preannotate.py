@@ -3,7 +3,7 @@
 Scheme (docs/annotation-policy.md, "Label scheme v2", decided 2026-11-15):
     span tag        HEB (romanized Hebrew not established in English) | SHARED (Hebrew/Yiddish also established in English)
     lang            hebrew (default) | yiddish | aramaic | arabic      -- language switched into, not origin
-    hebrew_variant  standard (default) | ashkenazic | sephardic        -- only when lang = hebrew
+    hebrew_variant  standard (default) | ashkenazic | sephardic | yemenite        -- only when lang = hebrew
     place names     untagged
 
 The LLM runs blind: it does not see the v1 labels. ls_build_v2.py compares the two afterwards, so places where
@@ -39,7 +39,7 @@ SCHEMA = {
                     "surface": {"type": "string"},
                     "tag": {"type": "string", "enum": ["HEB", "SHARED"]},
                     "lang": {"type": "string", "enum": ["hebrew", "yiddish", "aramaic", "arabic"]},
-                    "hebrew_variant": {"type": "string", "enum": ["standard", "ashkenazic", "sephardic"]},
+                    "hebrew_variant": {"type": "string", "enum": ["standard", "ashkenazic", "sephardic", "yemenite"]},
                 },
                 "required": ["surface", "tag", "lang", "hebrew_variant"], "additionalProperties": False}},
         },
@@ -72,7 +72,8 @@ lang: the language the speaker is switching INTO, not the word's etymology.
 
 hebrew_variant (when lang is not hebrew, output "standard"; it is ignored): the default is "standard" (modern Israeli). Mark the exception only when the SPELLING itself signals it:
 - "ashkenazic": s/ss for tav (Shabbos, Succos, bris, emes, Shavuos), -os plural endings (seforim is ambiguous; mitzvos is ashkenazic), penultimate-stress spellings like "Yontif", "Toirah". This applies to SHARED words too: "Hanukkah" is standard, "Chanukah"/"Chanukkah" is ashkenazic.
-- "sephardic": a spelling that marks a Sephardi/Mizrahi tradition distinct from modern Israeli, e.g. "ḥ" written as "h" with a Mizrahi spelling convention, or "Shabbath"/"th" for tav. Modern Israeli is already Sephardi-based, so this is rare.
+- "sephardic": a spelling that marks a traditional Sephardi or Mizrahi pronunciation that differs from modern Israeli, e.g. ḥ/ʿ gutturals written distinctly ("Ḥanukka", "'Ivrit" with a marked ayin), "th" for an unpointed tav as in "Shabbath" or "Berith".
+- "yemenite": a spelling that marks Yemenite pronunciation (e.g. "j" for gimel as in "Jimel", distinct waw/vav, "Shabbath").
 If unsure, "standard".
 
 Return {{"items": [{{"i": <index>, "spans": [...]}}, ...]}} with one item per input sentence, echoing each index. Empty spans list if none."""

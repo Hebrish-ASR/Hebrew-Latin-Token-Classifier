@@ -16,6 +16,7 @@
     <Choices name="hebrew_variant" toName="text" perRegion="true" choice="single" showInline="true">
       <Choice value="ashkenazic"/>
       <Choice value="sephardic"/>
+      <Choice value="yemenite"/>
     </Choices>
   </View>
   <Choices name="sentence" toName="text" choice="single" showInline="true">
