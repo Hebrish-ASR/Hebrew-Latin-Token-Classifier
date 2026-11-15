@@ -196,8 +196,49 @@ stay untagged" *in the dataset only*. The other conservative exclusions in [`tax
 - A Hebrew word with an English prefix or suffix is tagged as the **whole word** (*kibbutzniks*,
   *davening*, *makolets*). An English possessive *'s* and a separate English article stay outside.
 
+**Added in v2.2 (2026-11-15, agreed with Daniel):**
+- `garbled` (per span, tickbox): the span is a mangled rendering, typically speech-to-text output (*macaullete* for
+  *makolet*). Ordinary transliteration variation (ch/kh/h, with or without an apostrophe) is not garbled. This is
+  the training signal for cleaning up dictation.
+- `term` + `lemma` (per span, automatic, never hand-labelled): `scripts/lib/terms.py` matches the exact spelling
+  first, then a normalised key (`lib/orthography.normalise`) against `data/terms.csv` (term + variants) and
+  `data/exclusions.csv`. `term_matched` = false on a miss. **Term-disjoint splits must use `lemma`**, so that
+  *Shabbos* and *Shabbat* cannot sit on both sides of train/test. Links between spellings and cognates are made by
+  hand in `data/term_links.csv` (`form,lemma,relation,status,note`; relation `spelling` | `reading` | `inflection`
+  | `derived`; status `proposed` | `confirmed`). It was seeded 2026-11-15 with the 5 pairs that collide on the
+  normalised key (chanukah/hanukkah, charedi/haredi, kabala/kabbalah, brit milah/brit mila, tisha bav/tisha b'av),
+  all `proposed`. `ls_export_v2.py` recomputes term and lemma on every export, so new links apply without
+  re-running the LLM.
+- `variety` (per **sentence**): the variety of *English* the sentence is written in: `anglo_israeli` |
+  `yeshivish` | `jewish_american`, null = general / unmarked. **It labels the language, never the speaker:**
+  no religious or ethnic identity values (no Haredi / Dati / Mizrahi). The names follow established usage:
+  "Yeshivish" is used by its speakers and in sociolinguistics (S. B. Benor on Orthodox Jewish English; C. Weiser,
+  *Frumspeak: The First Dictionary of Yeshivish*). It is independent of `hebrew_variant`: Yeshivish usually
+  goes with Ashkenazic spellings, but not always. **The dataset card must say this** when the dataset is
+  published. Corpus check 2026-11-15: the corpus is almost entirely Anglo-Israeli daily life. About 24
+  sentences carry Yeshivish-leaning words (mostly *davening*, *mechutan*), and there are about 0 Ashkenazic
+  spellings, so these classes need targeted generation later.
+
+**Added during review, 2026-11-15 (Daniel):**
+- `place_type` (per span, human only, when `name_type` = place): city | neighbourhood | road | kibbutz | moshav |
+  region | landmark. Prompted by *Ayalon* (a road). The LLM pre-annotation does not fill it.
+- `text_error` (per sentence flag): the sentence text itself is wrong, e.g. dictation output *moreh* for "more". Leave
+  the word untagged and tick the flag, so the sentence can be fixed or dropped later.
+- **Shared is narrower than the old `anglicised` list.** A word that is simply English now, whatever its origin
+  (*bagel*; the LLM also tagged *synagogue* and *passover*), gets **no tag**. Shared means a Hebrew word that English has
+  also taken up (*Shabbat*, *kosher*). Per-term verdicts come from LS project 47 "Hebrish: Shared or plain English?"
+  (99 terms, 577 spans, built from the v2.2 run); `ls_export_v2.py` drops "Plain English" spans and retags "Hebrew"
+  ones in every sentence a human has not annotated.
+
+**Term-list attributes (planned, per term, not per sentence; no sentence re-run needed):** `spelling` (common /
+variant: e.g. *ma'alot* vs *maalot*, apostrophe spellings occur in 110 corpus sentences; a first pass from the
+no-apostrophe-is-canonical rule in taxonomy.md), `hebrew_script` (unvocalized; the data for pipeline pass 2),
+`vocalized` + `stress` (LLM-only, unverified), `gloss`, `register` (slang / everyday / formal / religious /
+military), and `variety_marker` (e.g. *chavrusa* -> yeshivish). Rejected for now: per-span IPA (too costly to
+verify), "TTS really mangles it" (needs audio tests; its own project), code-switch type (derivable from spans).
+
 **Schema versions:** v2.0 (first pre-annotation run, 2026-11-15, 3,650 sentences, stopped) has no
-`name_type` / `compound` and leaves names untagged. It is stale, kept only for comparison. v2.1 is current.
+`name_type` / `compound` and leaves names untagged. It is stale, kept only for comparison. v2.1 (pilot only) adds `name_type` / `compound`. **v2.2 is current**: the full run is `data/v2/preannotations.google-gemini-3-8-flash.v22.jsonl`.
 
 ### Span attributes (per term, in the lexicon; copied onto each corpus span)
 

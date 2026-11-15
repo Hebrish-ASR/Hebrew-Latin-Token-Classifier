@@ -6,6 +6,9 @@ Scheme (docs/annotation-policy.md, "Label scheme v2", decided 2026-11-15):
     hebrew_variant  standard (default) | ashkenazic | sephardic | yemenite        -- only when lang = hebrew
     name_type       none (default) | brand | person | place   -- names are tagged; training decides whether to use them
     compound        derived: true for a multi-word span (a fixed compound / set phrase)
+    garbled         span is a mangled spelling (e.g. dictation output "macaullete" for makolet)
+    term            derived: canonical term from data/terms.csv + exclusions.csv (lib/terms.py); term_matched false on a miss
+    variety         per SENTENCE: none (default) | anglo_israeli | yeshivish | jewish_american -- the English variety, not the speaker
 
 The LLM runs blind: it does not see the v1 labels. ls_build_v2.py compares the two afterwards, so places where
 they disagree can be reviewed first.
@@ -14,7 +17,8 @@ they disagree can be reviewed first.
     with-secrets uv run scripts/v2_preannotate.py --all --model ...       # bulk: needs Daniel's yes on model + estimate
 
 Output: data/v2/preannotations.<model-slug>.jsonl, one row per sentence:
-    {id, split, text, model, at, spans: [{start, end, surface, tag, lang, hebrew_variant}]}
+    {id, split, text, model, at, schema, variety, spans: [{start, end, surface, tag, lang, hebrew_variant, name_type,
+     compound, garbled, term, term_matched}]}
 """
 from __future__ import annotations
 
@@ -23,11 +27,12 @@ import argparse, asyncio, csv, datetime as dt, json, pathlib, random, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib import llm  # noqa: E402
 from lib.corpus import read_jsonl, append_jsonl, word_spans  # noqa: E402
+from lib.terms import link  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT_DIR = ROOT / "data" / "v2"
 BATCH = 10
-SCHEMA_VERSION = "v2.1"   # 2026-11-15: + name_type, compound; names tagged. v2.0 rows (no suffix in the filename) are stale.
+SCHEMA_VERSION = "v2.2"   # 2026-11-15: v2.1 + garbled, term, variety. Earlier files (no suffix / .v21) are stale.
 
 SCHEMA = {
     "type": "object",
@@ -43,10 +48,12 @@ SCHEMA = {
                     "lang": {"type": "string", "enum": ["hebrew", "yiddish", "aramaic", "arabic"]},
                     "hebrew_variant": {"type": "string", "enum": ["standard", "ashkenazic", "sephardic", "yemenite"]},
                     "name_type": {"type": "string", "enum": ["none", "brand", "person", "place"]},
+                    "garbled": {"type": "boolean"},
                 },
-                "required": ["surface", "tag", "lang", "hebrew_variant", "name_type"], "additionalProperties": False}},
+                "required": ["surface", "tag", "lang", "hebrew_variant", "name_type", "garbled"], "additionalProperties": False}},
+            "variety": {"type": "string", "enum": ["none", "anglo_israeli", "yeshivish", "jewish_american"]},
         },
-        "required": ["i", "spans"], "additionalProperties": False}}},
+        "required": ["i", "spans", "variety"], "additionalProperties": False}}},
     "required": ["items"], "additionalProperties": False,
 }
 
@@ -81,7 +88,15 @@ hebrew_variant (when lang is not hebrew, output "standard"; it is ignored): the 
 - "yemenite": a spelling that marks Yemenite pronunciation (e.g. "j" for gimel, "w" for vav as in "Dawid"). If a spelling fits both sephardic and yemenite, prefer sephardic.
 If unsure, "standard".
 
-Return {{"items": [{{"i": <index>, "spans": [...]}}, ...]}} with one item per input sentence, echoing each index. Empty spans list if none."""
+garbled: true only when the span is a mangled or misspelled rendering of a Hebrew word, typically speech-to-text output (e.g. "macaullete" for makolet, "misrad a pnim"). Ordinary transliteration variation (ch/kh/h, with or without apostrophe) is NOT garbled.
+
+variety (one per SENTENCE): the variety of ENGLISH the sentence is written in. It describes the language, never the speaker's identity, religiosity or ethnicity.
+- "anglo_israeli": the English of English speakers living in Israel; Israeli daily life, bureaucracy, army, shopping (misrad hapnim, makolet, miluim).
+- "yeshivish": Orthodox yeshiva English; yeshiva/learning vocabulary (chavrusa, shteiging, shiur, sugya, bochur, b'emes, mamash) and its grammar ("holding by", "learn" for Torah study, "by" for "at someone's").
+- "jewish_american": diaspora Jewish English (shul, bubbe, Hebrew school, bar mitzvah party talk, kvetch).
+- "none": no clear marker, or a sentence with only SHARED words. When unsure, "none".
+
+Return {{"items": [{{"i": <index>, "variety": "...", "spans": [...]}}, ...]}} with one item per input sentence, echoing each index. Empty spans list if none."""
 
 
 def load_corpus() -> list[dict]:
@@ -126,7 +141,9 @@ def locate(text: str, span: dict) -> list[dict]:
         out.append({"start": s, "end": e, "surface": surface, "tag": span["tag"], "lang": lang,
                     "hebrew_variant": span["hebrew_variant"] if lang == "hebrew" else None,
                     "name_type": None if span.get("name_type", "none") == "none" else span["name_type"],
-                    "compound": bool(re.search(r"\s", surface))})
+                    "compound": bool(re.search(r"\s", surface)),
+                    "garbled": bool(span.get("garbled")),
+                    "term": (lk := link(surface))[0], "term_matched": lk[1]})
     return out
 
 
@@ -142,6 +159,7 @@ async def run(rows: list[dict], model: str, out: pathlib.Path, concurrency: int 
             user = "\n".join(f"{i}. {r['text']}" for i, r in enumerate(batch))
             res = await client.json_completion(system, user, SCHEMA, temperature=0.0)
             by_i = {it["i"]: it["spans"] for it in res.get("items", [])}
+            var_i = {it["i"]: it.get("variety", "none") for it in res.get("items", [])}
             now = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             rows_out = []
             for i, r in enumerate(batch):
@@ -158,6 +176,7 @@ async def run(rows: list[dict], model: str, out: pathlib.Path, concurrency: int 
                 spans.sort(key=lambda s: s["start"])
                 rows_out.append({"id": r["id"], "split": r["split"], "text": r["text"], "model": model, "at": now,
                                  "schema": SCHEMA_VERSION,
+                                 "variety": None if var_i.get(i, "none") == "none" else var_i[i],
                                  "spans": spans})
             append_jsonl(out, rows_out)
         await asyncio.gather(*(one(todo[k:k + BATCH]) for k in range(0, len(todo), BATCH)))

@@ -340,8 +340,11 @@ agreed on 27/30. The 3 differences: Gemini also tagged *hummus* (SHARED), *Yocha
 correctly left out *moreh* (a dictation typo for "more" that v1 had tagged). 11/30 differ from v1. The
 pilot contained no Ashkenazic spellings, so `hebrew_variant` will need generated data. Measured cost per
 sentence: Gemini ~$0.00055, Sonnet ~$0.0016 (OpenRouter prices on 2026-11-15). For all 4,737 sentences:
-~$2.60 vs ~$7.60. The project holds the 30 Gemini pilot tasks; the full run is waiting for approval.
-Write-back (`ls_export_v2.py`) is not written yet.
+~$2.60 vs ~$7.60. Full run 2026-11-15 (schema v2.2, `data/v2/preannotations.google-gemini-3-8-flash.v22.jsonl`, 4,737 sentences). The
+whole v2 task spent **$4.92** (pilots, a stopped v2.0 run of 3,650 sentences, then the v2.2 run). Project 39 holds 1,620 tasks:
+the 30 pilot sentences + `ls_build_v2.py --select`: 1,060 that differ from v1, 365 test, 165 audit (5%); the other 3,117 are
+auto-accepted. Write-back: `with-secrets uv run scripts/ls_export_v2.py [--apply]` -> `data/v2/labels.jsonl`
+(reads project 39 and the Shared-or-plain-English verdicts in project 47).
 
 `ls_export.py` writes the same records the Space's page did (checked 2026-11-15: all 466 current-format
 decisions, 342 span / 113 boundary / 11 record, rebuilt identically, key order included). One addition:

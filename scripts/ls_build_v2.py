@@ -31,11 +31,14 @@ def v1_spans() -> dict[str, list[dict]]:
     return out
 
 
-HELP = ("<div style='font-size:.8em;opacity:.65;margin:.3em 0 .6em'><b>HEB</b> romanized Hebrew not known in English "
-        "(makolet) &middot; <b>SHARED</b> also an English word (Shabbat, kosher). Names are tagged too: click the span, tick Brand / Person / Place. "
-        "Fixed phrases (cheder madregot) are one span, ticked Compound; a Hebrew word with an English ending is tagged whole (kibbutzniks). "
-        "Add: press h or s, then select the word. Remove: click the span, Backspace. Click a span to mark an exception "
-        "(Yiddish, Ashkenazic ...); blank means Hebrew / Standard.</div>")
+HELP = ("<div style='font-size:.8em;opacity:.65;margin:.3em 0 .6em'><b>Hebrew</b> (h): romanized Hebrew not known in "
+        "English (makolet) &middot; <b>Shared</b> (s): also an English word (Shabbat, kosher). Add: press h or s, then select "
+        "the word. Remove: click the span, Backspace. Fixed phrases (cheder madregot) are one span; a Hebrew word with an "
+        "English ending is tagged whole (kibbutzniks). Click a span for names, form and exceptions; blank means the default. "
+        "All correct: Ctrl+Enter.</div>")
+
+
+VARIETY = {"anglo_israeli": "Anglo-Israeli", "yeshivish": "Yeshivish", "jewish_american": "Jewish-American"}
 
 
 def task(row: dict, v1: list[dict]) -> dict:
@@ -61,9 +64,15 @@ def task(row: dict, v1: list[dict]) -> dict:
         if s.get("compound"):
             result.append({"id": rid, "from_name": "compound", "to_name": "text", "type": "choices",
                            "value": {**pos, "choices": ["Compound"]}})
+        if s.get("garbled"):
+            result.append({"id": rid, "from_name": "garbled", "to_name": "text", "type": "choices",
+                           "value": {**pos, "choices": ["Garbled spelling"]}})
         if s.get("hebrew_variant") not in (None, "standard"):
             result.append({"id": rid, "from_name": "hebrew_variant", "to_name": "text", "type": "choices",
                            "value": {**pos, "choices": [s["hebrew_variant"].capitalize()]}})
+    if row.get("variety"):
+        result.append({"id": "variety", "from_name": "variety", "to_name": "text", "type": "choices",
+                       "value": {"choices": [VARIETY[row["variety"]]]}})
     return {"data": {"id": row["id"], "split": row["split"], "text": row["text"], "note": note,
                      "differs": differs, "v1": v1_txt, "llm_model": row["model"]},
             "predictions": [{"model_version": row["model"], "result": result}]}

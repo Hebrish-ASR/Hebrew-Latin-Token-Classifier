@@ -1,33 +1,96 @@
 <View>
-  <Style>.lsf-richtext, .htx-richtext {font-size:1.25em}</Style>
+  <Style>
+    .htx-richtext, .lsf-richtext { font-size: 1.3em; line-height: 1.7; }
+    .ccl-card { border: 1px solid #d0d4da; border-radius: 8px; padding: 8px 14px 4px; margin: 12px 0; }
+    .ccl-card-span { background: #f4f5f8; }
+    .ccl-card-sentence { background: #f8f7f1; }
+    .ccl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+    .ccl-box { border-radius: 6px; padding: 4px 10px 0; border-left: 5px solid #adb5bd; background: #fff; }
+    .ccl-name { border-left-color: #7048e8; }
+    .ccl-form { border-left-color: #495057; }
+    .ccl-lang { border-left-color: #0c8599; }
+    .ccl-variant { border-left-color: #e67700; }
+    .ccl-variety { border-left-color: #2f9e44; }
+    .ccl-flag { border-left-color: #c92a2a; }
+    .ccl-box h1, .ccl-box h2, .ccl-box h3, .ccl-box h4, .ccl-box h5, .ccl-box h6 { font-size: 15px !important; margin: 4px 0 2px !important; }
+    .ccl-card > h1, .ccl-card > h2, .ccl-card > h3, .ccl-card > h4, .ccl-card > h5, .ccl-card > h6 { font-size: 16px !important; margin: 2px 0 !important; opacity: .8; }
+  </Style>
+
   <HyperText name="note" value="$note" inline="true"/>
+
   <Labels name="tag" toName="text">
-    <Label value="HEB" background="#e8590c" hotkey="h"/>
-    <Label value="SHARED" background="#1c7ed6" hotkey="s"/>
+    <Label value="Hebrew" alias="HEB" background="#e8590c" hotkey="h"/>
+    <Label value="Shared" alias="SHARED" background="#1c7ed6" hotkey="s"/>
   </Labels>
   <Text name="text" value="$text" granularity="word"/>
-  <View visibleWhen="region-selected">
-    <Header value="Selected span: set only if it is an exception (blank = Hebrew / Standard / not a name)" size="6"/>
-    <Choices name="lang" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="Yiddish"/>
-      <Choice value="Aramaic"/>
-      <Choice value="Arabic"/>
-    </Choices>
-    <Choices name="name_type" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="Brand"/>
-      <Choice value="Person"/>
-      <Choice value="Place"/>
-    </Choices>
-    <Choices name="compound" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="Compound"/>
-    </Choices>
-    <Choices name="hebrew_variant" toName="text" perRegion="true" choice="single" showInline="true">
-      <Choice value="Ashkenazic"/>
-      <Choice value="Sephardic"/>
-      <Choice value="Yemenite"/>
-    </Choices>
+
+  <View visibleWhen="region-selected" className="ccl-card ccl-card-span">
+    <Header value="Selected span: tick only what applies" size="5"/>
+    <View className="ccl-grid">
+      <View className="ccl-box ccl-name">
+        <Header value="Name" size="6"/>
+        <Choices name="name_type" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="Brand"/>
+          <Choice value="Person"/>
+          <Choice value="Place"/>
+        </Choices>
+        <Header value="Place type (if Place)" size="6"/>
+        <Choices name="place_type" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="City"/>
+          <Choice value="Neighbourhood"/>
+          <Choice value="Road"/>
+          <Choice value="Kibbutz"/>
+          <Choice value="Moshav"/>
+          <Choice value="Region"/>
+          <Choice value="Landmark"/>
+        </Choices>
+      </View>
+      <View className="ccl-box ccl-form">
+        <Header value="Form" size="6"/>
+        <Choices name="compound" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="Compound"/>
+        </Choices>
+        <Choices name="garbled" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="Garbled spelling"/>
+        </Choices>
+      </View>
+      <View className="ccl-box ccl-lang">
+        <Header value="Language (blank = Hebrew)" size="6"/>
+        <Choices name="lang" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="Yiddish"/>
+          <Choice value="Aramaic"/>
+          <Choice value="Arabic"/>
+        </Choices>
+      </View>
+      <View className="ccl-box ccl-variant">
+        <Header value="Hebrew variant (blank = Standard)" size="6"/>
+        <Choices name="hebrew_variant" toName="text" perRegion="true" choice="single" showInline="true">
+          <Choice value="Ashkenazic"/>
+          <Choice value="Sephardic"/>
+          <Choice value="Yemenite"/>
+        </Choices>
+      </View>
+    </View>
   </View>
-  <Choices name="sentence" toName="text" choice="single" showInline="true">
-    <Choice value="can't decide" alias="can't decide" html="Can't decide" hotkey="d"/>
-  </Choices>
+
+  <View className="ccl-card ccl-card-sentence">
+    <Header value="Whole sentence" size="5"/>
+    <View className="ccl-grid">
+      <View className="ccl-box ccl-variety">
+        <Header value="English variety (blank = General)" size="6"/>
+        <Choices name="variety" toName="text" choice="single" showInline="true">
+          <Choice value="Anglo-Israeli"/>
+          <Choice value="Yeshivish"/>
+          <Choice value="Jewish-American"/>
+        </Choices>
+      </View>
+      <View className="ccl-box ccl-flag">
+        <Header value="Flag" size="6"/>
+        <Choices name="sentence" toName="text" choice="multiple" showInline="true">
+          <Choice value="can't decide" alias="can't decide" html="Can't decide" hotkey="d"/>
+          <Choice value="Text error" hint="The sentence text itself is wrong, e.g. a dictation error such as 'moreh' for 'more'"/>
+        </Choices>
+      </View>
+    </View>
+  </View>
 </View>

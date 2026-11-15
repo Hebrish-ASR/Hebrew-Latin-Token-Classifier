@@ -1,0 +1,13 @@
+<View>
+  <Style>
+    .ccl-term { font-size: 2em; font-weight: 600; margin: 8px 0; }
+    .ccl-ex { font-size: 1.1em; opacity: .8; }
+  </Style>
+  <HyperText name="term_html" value="$term_html" inline="true"/>
+  <Choices name="verdict" toName="term_html" choice="single" showInline="true" required="true">
+    <Choice value="Shared" html="Shared: Hebrew word also used in English" hotkey="1" background="#1c7ed6"/>
+    <Choice value="Plain English" html="Plain English: no tag" hotkey="2"/>
+    <Choice value="Hebrew" html="Hebrew: not known in English" hotkey="3"/>
+    <Choice value="can't decide" html="Can't decide" hotkey="d"/>
+  </Choices>
+</View>
