@@ -317,6 +317,32 @@ with-secrets uv run scripts/ls_export.py --project 35 --project 36 --project 37 
 with-secrets uv run scripts/ls_export.py --project 35 --project 36 --project 37 --apply  # merge into review/decisions.json
 ```
 
+#### Label scheme v2: sentence review (project 39, since 2026-11-15)
+
+Project 39 "Hebrish: sentence labels v2", https://label.carrotcakelab.com/projects/39, implements the v2
+scheme ([docs/annotation-policy.md](docs/annotation-policy.md#label-scheme-v2-decided-2026-11-15)) as
+**model-assisted labelling**: an LLM labels every sentence blind, the spans are pre-drawn as Label Studio
+predictions (`show_collab_predictions` on, `model_version` = the LLM id), and a human corrects them. There is
+one task per sentence, with labels `HEB` (h) / `SHARED` (s). Clicking a span offers the exceptions only
+(lang: yiddish / aramaic / arabic; hebrew_variant: ashkenazic / sephardic); blank means hebrew / standard.
+`d` = can't decide. Each task shows whether the LLM's spans differ from the v1 labels, and those tasks are
+imported first.
+
+```bash
+with-secrets uv run scripts/v2_preannotate.py --pilot 30 --model google/gemini-3.8-flash   # -> data/v2/pilot.<model>.jsonl
+uv run scripts/ls_build_v2.py data/v2/pilot.google-gemini-3-8-flash.jsonl -o /tmp/v2.json
+ccl.py import 39 /tmp/v2.json --confirm        # config: scripts/ls_v2_config.xml
+```
+
+Pilot 2026-11-15, 30 stratified sentences, two models run blind. Gemini 3.8 Flash and Claude Sonnet 5
+agreed on 27/30. The 3 differences: Gemini also tagged *hummus* (SHARED), *Yochananof* (a brand; HEB) and
+*bagel* as Yiddish. Both models found v1 misses (*shuk*, *pigu'a*, *chelka*, *cheder madregot*) and
+correctly left out *moreh* (a dictation typo for "more" that v1 had tagged). 11/30 differ from v1. The
+pilot contained no Ashkenazic spellings, so `hebrew_variant` will need generated data. Measured cost per
+sentence: Gemini ~$0.00055, Sonnet ~$0.0016 (OpenRouter prices on 2026-11-15). For all 4,737 sentences:
+~$2.60 vs ~$7.60. The project holds the 30 Gemini pilot tasks; the full run is waiting for approval.
+Write-back (`ls_export_v2.py`) is not written yet.
+
 `ls_export.py` writes the same records the Space's page did (checked 2026-11-15: all 466 current-format
 decisions, 342 span / 113 boundary / 11 record, rebuilt identically, key order included). One addition:
 `corrected_span` on a span decision when the highlight was redrawn (`build_splits.py` ignores it).
