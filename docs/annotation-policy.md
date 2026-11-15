@@ -195,7 +195,7 @@ language identification.
 | Attribute | Values | Default | Notes |
 | --- | --- | --- | --- |
 | `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | `hebrew` | The language the speaker is switching into, **not the word's origin**. Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew` (DECIDED 2026-11-15). |
-| `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. |
+| `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. Annotators mark only the exceptions (`ashkenazic`, `sephardic`); everything else is left at the default. |
 
 **Why `hebrew_variant` matters (Daniel, 2026-11-15):** small spelling differences say a lot about where
 the speaker comes from (*Shabbos* vs *Shabbat*). One use case is matching a text to a TTS voice with the
@@ -207,6 +207,11 @@ consumer would combine the variants of all the spans in a text into one estimate
 reads code-switched Hebrew with standard (Israeli) phonetics and one that expects Ashkenazi phonetics are
 **separate training processes**. A corpus without this attribute cannot be split by variant to build
 either one, and cannot route a text to the right voice.
+
+**Rejected 2026-11-15: a separate "marked vs default" flag.** It would have told apart spellings that
+positively signal standard Hebrew (*Shabbat*) from spellings with no signal (*makolet*), which would keep
+a standard-voice training split clean. Daniel chose the simpler rule: everything is standard unless the
+spelling marks it as an exception.
 
 **Model card note (required when anything trained on `lang` is published):** classing Arabic-origin
 Israeli slang as `hebrew` is a simplification for this purpose, not a political or linguistic
