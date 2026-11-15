@@ -197,6 +197,11 @@ language identification.
 | `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | `hebrew` | The language the speaker is switching into, **not the word's origin**. Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew` (DECIDED 2026-11-15). |
 | `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. |
 
+**Why `hebrew_variant` matters (Daniel, 2026-11-15):** small spelling differences say a lot about where
+the speaker comes from (*Shabbos* vs *Shabbat*). One use case is matching a text to a TTS voice with the
+right accent, and for that the variant is the signal. A single word is only weak evidence; a downstream
+consumer would combine the variants of all the spans in a text into one estimate for the speaker.
+
 **Model card note (required when anything trained on `lang` is published):** classing Arabic-origin
 Israeli slang as `hebrew` is a simplification for this purpose, not a political or linguistic
 judgement. It records what the speaker is switching into, not where the word came from.
