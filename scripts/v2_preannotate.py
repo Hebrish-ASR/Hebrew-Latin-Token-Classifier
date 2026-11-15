@@ -71,7 +71,7 @@ lang: the language the speaker is switching INTO, not the word's etymology.
 - "arabic": only Arabic that is not part of Israeli Hebrew usage.
 
 hebrew_variant (when lang is not hebrew, output "standard"; it is ignored): the default is "standard" (modern Israeli). Mark the exception only when the SPELLING itself signals it:
-- "ashkenazic": s/ss for tav (Shabbos, Succos, bris, emes, Shavuos), -os plural endings (seforim is ambiguous; mitzvos is ashkenazic), penultimate-stress spellings like "Yontif", "Toirah".
+- "ashkenazic": s/ss for tav (Shabbos, Succos, bris, emes, Shavuos), -os plural endings (seforim is ambiguous; mitzvos is ashkenazic), penultimate-stress spellings like "Yontif", "Toirah". This applies to SHARED words too: "Hanukkah" is standard, "Chanukah"/"Chanukkah" is ashkenazic.
 - "sephardic": a spelling that marks a Sephardi/Mizrahi tradition distinct from modern Israeli, e.g. "ḥ" written as "h" with a Mizrahi spelling convention, or "Shabbath"/"th" for tav. Modern Israeli is already Sephardi-based, so this is rare.
 If unsure, "standard".
 

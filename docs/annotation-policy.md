@@ -195,7 +195,7 @@ language identification.
 | Attribute | Values | Default | Notes |
 | --- | --- | --- | --- |
 | `lang` | `hebrew`, `yiddish`, `aramaic`, `arabic` | `hebrew` | The language the speaker is switching into, **not the word's origin**. Arabic-origin Israeli slang (*yalla*, *sababa*) is `hebrew` (DECIDED 2026-11-15). |
-| `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. Annotators mark only the exceptions (`ashkenazic`, `sephardic`); everything else is left at the default. |
+| `hebrew_variant` | `standard`, `ashkenazic`, `sephardic` | `standard` | Only when `lang` = `hebrew`; empty otherwise. This is the transliteration tradition the spelling signals: *Shabbos* / *Shabbat*, *-os* / *-ot* endings, *Succos* / *Sukkot*. A spelling that gives no sign is `standard`. Applies to `SHARED` spans too: *Hanukkah* is `standard` (Israeli usage, Sephardi-based), *Chanukah* / *Chanukkah* is `ashkenazic` (Daniel, 2026-11-15). Annotators mark only the exceptions (`ashkenazic`, `sephardic`); everything else is left at the default. |
 
 **Why `hebrew_variant` matters (Daniel, 2026-11-15):** small spelling differences say a lot about where
 the speaker comes from (*Shabbos* vs *Shabbat*). One use case is matching a text to a TTS voice with the
